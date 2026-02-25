@@ -46,6 +46,7 @@ jobs:
         run: |
           echo "@timmsy:registry=https://npm.pkg.github.com" >> "$NPM_CONFIG_USERCONFIG"
           echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> "$NPM_CONFIG_USERCONFIG"
+          npm pkg set name="@timmsy1998/riftjs"
           npm publish --registry=https://npm.pkg.github.com
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

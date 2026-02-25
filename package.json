@@ -1,6 +1,6 @@
 {
   "name": "@timmsy/riftjs",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -43,7 +43,7 @@
     "api-wrapper"
   ],
   "author": "James Timms",
-  "description": "A lightweight Node.js wrapper for the Riot Games API, providing easy access to League of Legends game data.",
+  "description": "TypeScript-first Riot Games API wrapper for Node.js, with built-in Data Dragon support",
   "license": "MIT",
   "repository": {
     "type": "git",

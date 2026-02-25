@@ -1,8 +1,8 @@
-# RiftJS
+![RiftJS logo](riftjs-logo.png)
 
 TypeScript-first Riot Games API wrapper for Node.js, with built-in Data Dragon support.
 
-[![npm version](https://badge.fury.io/js/@timmsy%2Friftjs.svg)](https://www.npmjs.com/package/@timmsy/riftjs)
+[![npm version](https://img.shields.io/npm/v/@timmsy/riftjs)](https://www.npmjs.com/package/@timmsy/riftjs)
 ![GitHub license](https://img.shields.io/github/license/timmsy1998/RiftJS)
 
 ## What this package does

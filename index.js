@@ -49,12 +49,39 @@ class RiotAPI {
 }
 
 class DataDragon {
-    constructor(version = '14.19.1', locale = 'en_US') {
+    constructor(version = null, locale = 'en_US') {
         this.version = version;
         this.locale = locale;
-        this.baseURL = `https://ddragon.leagueoflegends.com/cdn/${this.version}/data/${this.locale}`;
-        // Attach static-data endpoint methods for the configured version/locale.
-        Object.assign(this, dataDragonEndpoints(this.baseURL));
+        this.baseURL = null;
+        this._baseURLPromise = null;
+
+        // Attach static-data endpoint methods that resolve the latest version when needed.
+        Object.assign(this, dataDragonEndpoints(() => this._resolveBaseURL()));
+    }
+
+    async _resolveBaseURL() {
+        if (this.baseURL) return this.baseURL;
+        if (this._baseURLPromise) return this._baseURLPromise;
+
+        this._baseURLPromise = (async () => {
+            if (!this.version) {
+                const response = await axios.get('https://ddragon.leagueoflegends.com/api/versions.json');
+                const latestVersion = Array.isArray(response.data) ? response.data[0] : null;
+                if (!latestVersion) {
+                    throw new Error('Could not resolve latest Data Dragon version');
+                }
+                this.version = latestVersion;
+            }
+
+            this.baseURL = `https://ddragon.leagueoflegends.com/cdn/${this.version}/data/${this.locale}`;
+            return this.baseURL;
+        })();
+
+        try {
+            return await this._baseURLPromise;
+        } finally {
+            this._baseURLPromise = null;
+        }
     }
 }
 

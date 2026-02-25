@@ -107,6 +107,8 @@ fetchStaticData();
 
 - `getChampions()`: Fetch all champion data.
 - `getItems()`: Fetch all item data.
+- `new DataDragon()` resolves the latest Data Dragon patch automatically.
+- `new DataDragon('x.y.z')` pins requests to an explicit patch version.
 
 ## Region Mapping
 

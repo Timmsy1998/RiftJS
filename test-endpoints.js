@@ -12,7 +12,10 @@ async function run() {
         console.log('[PASS] getAccountByRiotId:', account.puuid);
 
         const summoner = await riot.getSummonerByPuuid(account.puuid);
-        console.log('[PASS] getSummonerByPuuid:', summoner.name || '(no name)');
+        console.log('[PASS] getSummonerByPuuid:', {
+            puuid: summoner.puuid,
+            summonerLevel: summoner.summonerLevel,
+        });
 
         const matchIds = await riot.getMatchlistByPuuid(account.puuid, { start: 0, count: 3 });
         console.log('[PASS] getMatchlistByPuuid:', matchIds.length, 'match ids');
@@ -31,6 +34,7 @@ async function run() {
 
     const champions = await dd.getChampions();
     console.log('[PASS] getChampions:', Object.keys(champions.data || {}).length, 'champions');
+    console.log('[INFO] DataDragon version:', dd.version);
 
     const items = await dd.getItems();
     console.log('[PASS] getItems:', Object.keys(items.data || {}).length, 'items');

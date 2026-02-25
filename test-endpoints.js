@@ -17,6 +17,12 @@ async function run() {
             summonerLevel: summoner.summonerLevel,
         });
 
+        const rank = await riot.getRankByPuuid(account.puuid);
+        console.log('[PASS] getRankByPuuid:', {
+            solo: rank.solo ? `${rank.solo.tier} ${rank.solo.rank} | ${rank.solo.leaguePoints} LP | ${rank.solo.wins}W-${rank.solo.losses}L | ${rank.solo.winRate}% WR` : null,
+            flex: rank.flex ? `${rank.flex.tier} ${rank.flex.rank} | ${rank.flex.leaguePoints} LP | ${rank.flex.wins}W-${rank.flex.losses}L | ${rank.flex.winRate}% WR` : null,
+        });
+
         const matchIds = await riot.getMatchlistByPuuid(account.puuid, { start: 0, count: 3 });
         console.log('[PASS] getMatchlistByPuuid:', matchIds.length, 'match ids');
 

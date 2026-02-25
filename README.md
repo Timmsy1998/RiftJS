@@ -100,6 +100,8 @@ fetchStaticData();
 
 - `getAccountByRiotId(riotId, [tagLine], [region])`: Fetch account by Riot ID (e.g., `Timmsy#BRUV`).
 - `getSummonerByPuuid(puuid, [region])`: Get summoner data by PUUID.
+- `getRankEntriesByPuuid(puuid, [region])`: Get all League-V4 rank entries for a player PUUID.
+- `getRankByPuuid(puuid, [region])`: Get rank split by Solo and Flex queues from a PUUID.
 - `getMatchlistByPuuid(puuid, [options], [region])`: Get match history (options: `{ start, count }`).
 - `getMatchById(matchId, [region])`: Get full match payload (`metadata` + `info`) by match ID.
 - `getMatchTimelineById(matchId, [region])`: Get timeline payload by match ID.
@@ -117,6 +119,10 @@ fetchStaticData();
 `pacing` helps respect rate limits on multi-request methods:
 - `getMatchlistByPuuidAll`: `{ delayMs, maxMatches }`
 - `getMatchesWithDetailsByPuuid`: `{ pageDelayMs, detailDelayMs, maxMatches }`
+
+Rank queue mapping used by helper methods:
+- Solo Queue: `RANKED_SOLO_5x5`
+- Flex Queue: `RANKED_FLEX_SR`
 
 ### DataDragon
 

@@ -1,4 +1,14 @@
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const SOLO_QUEUE = 'RANKED_SOLO_5x5';
+const FLEX_QUEUE = 'RANKED_FLEX_SR';
+const withRankMetrics = (entry) => {
+    if (!entry) return null;
+    const wins = Number(entry.wins) || 0;
+    const losses = Number(entry.losses) || 0;
+    const gamesPlayed = wins + losses;
+    const winRate = gamesPlayed > 0 ? Number(((wins / gamesPlayed) * 100).toFixed(2)) : 0;
+    return { ...entry, winRate };
+};
 
 module.exports = (client, defaultRegion, regionMap) => ({
     /**
@@ -44,6 +54,37 @@ module.exports = (client, defaultRegion, regionMap) => ({
         } catch (error) {
             throw this._handleError(error);
         }
+    },
+
+    /**
+     * Fetch all ranked entries for a player PUUID.
+     * @param {string} puuid - Player PUUID.
+     * @param {string} [region] - Region code used to resolve platform routing.
+     * @returns {Promise<object[]>} Ranked entries from League-V4.
+     */
+    async getRankEntriesByPuuid(puuid, region = defaultRegion) {
+        const platform = regionMap[region].platform;
+        try {
+            const response = await client.get(`/lol/league/v4/entries/by-puuid/${encodeURIComponent(puuid)}`, {
+                baseURL: `https://${platform}`,
+            });
+            return response.data;
+        } catch (error) {
+            throw this._handleError(error);
+        }
+    },
+
+    /**
+     * Fetch ranked info split into Solo and Flex queues.
+     * @param {string} puuid - Player PUUID.
+     * @param {string} [region] - Region code used to resolve platform routing.
+     * @returns {Promise<{solo: object|null, flex: object|null, entries: object[]}>} Queue-split rank payload.
+     */
+    async getRankByPuuid(puuid, region = defaultRegion) {
+        const entries = await this.getRankEntriesByPuuid(puuid, region);
+        const solo = withRankMetrics(entries.find((entry) => entry.queueType === SOLO_QUEUE) || null);
+        const flex = withRankMetrics(entries.find((entry) => entry.queueType === FLEX_QUEUE) || null);
+        return { solo, flex, entries };
     },
 
     /**

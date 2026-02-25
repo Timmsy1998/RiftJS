@@ -3,9 +3,8 @@ const axios = require('axios');
 const riotEndpoints = require('./endpoints/riot');
 const dataDragonEndpoints = require('./endpoints/datadragon');
 
-// Region mapping: short region to shard
+// Maps region codes to the platform and routing shard hosts required by Riot APIs.
 const regionMap = {
-    // Platform Routing (short regions)
     BR1: { platform: 'br1.api.riotgames.com', shard: 'americas.api.riotgames.com' },
     EUN1: { platform: 'eun1.api.riotgames.com', shard: 'europe.api.riotgames.com' },
     EUW1: { platform: 'euw1.api.riotgames.com', shard: 'europe.api.riotgames.com' },
@@ -24,9 +23,6 @@ const regionMap = {
     VN2: { platform: 'vn2.api.riotgames.com', shard: 'sea.api.riotgames.com' },
 };
 
-/**
- * RiotAPI class for interacting with Riot Games API endpoints.
- */
 class RiotAPI {
     constructor() {
         this.apiKey = process.env.RIOT_API_KEY;
@@ -36,14 +32,11 @@ class RiotAPI {
         this.client = axios.create({
             headers: { 'X-Riot-Token': this.apiKey },
         });
-        // Attach RiotAPI endpoints with region map
+        // Attach endpoint methods with a shared axios client and region configuration.
         Object.assign(this, riotEndpoints(this.client, this.region, regionMap));
     }
 
-    /**
-     * Handle axios errors and provide meaningful messages.
-     * @private
-     */
+    // Normalize axios errors to stable Error messages for consumers.
     _handleError(error) {
         if (error.response) {
             const { status, data } = error.response;
@@ -55,15 +48,12 @@ class RiotAPI {
     }
 }
 
-/**
- * DataDragon class for accessing static game data.
- */
 class DataDragon {
     constructor(version = '14.19.1', locale = 'en_US') {
         this.version = version;
         this.locale = locale;
         this.baseURL = `https://ddragon.leagueoflegends.com/cdn/${this.version}/data/${this.locale}`;
-        // Attach DataDragon endpoints
+        // Attach static-data endpoint methods for the configured version/locale.
         Object.assign(this, dataDragonEndpoints(this.baseURL));
     }
 }

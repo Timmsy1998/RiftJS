@@ -2,7 +2,7 @@ const axios = require('axios');
 
 module.exports = (baseURL) => ({
     /**
-     * Get all champion data.
+     * Fetch champion metadata for the configured Data Dragon version/locale.
      * @returns {Promise<object>} Champion data.
      */
     async getChampions() {
@@ -15,7 +15,7 @@ module.exports = (baseURL) => ({
     },
 
     /**
-     * Get all item data.
+     * Fetch item metadata for the configured Data Dragon version/locale.
      * @returns {Promise<object>} Item data.
      */
     async getItems() {

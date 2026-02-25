@@ -20,7 +20,7 @@ RiftJS simplifies interaction with the Riot Games API and DataDragon static data
 
 Install RiftJS via npm:
 
-```
+```bash
 npm install @timmsy/riftjs
 ```
 
@@ -33,18 +33,23 @@ You’ll also need a Riot Games API key from [developer.riotgames.com](https://d
 
 2. **Configure Environment**:
    Create a `.env` file in your project root with your API key and region:
-   ```
+
+   ```env
    RIOT_API_KEY=RGAPI-your-api-key-here
    REGION=EUW1
+   TEST_RIOT_ID=YourRiotName
+   TEST_TAG_LINE=EUW
    ```
+
    - Replace `RGAPI-your-api-key-here` with your API key.
    - Use a short region code (e.g., `EUW1`, `NA1`). See [Region Mapping](#region-mapping) for details.
+   - `TEST_RIOT_ID` and `TEST_TAG_LINE` are used by the endpoint test script.
 
 ## Usage
 
 Here’s a basic example to get started:
 
-```
+```js
 const { RiotAPI, DataDragon } = require('@timmsy/riftjs');
 
 // Initialize RiotAPI
@@ -92,22 +97,28 @@ fetchStaticData();
 ## API Reference
 
 ### RiotAPI
+
 - `getAccountByRiotId(riotId, [tagLine], [region])`: Fetch account by Riot ID (e.g., `Timmsy#BRUV`).
 - `getSummonerByPuuid(puuid, [region])`: Get summoner data by PUUID.
 - `getMatchlistByPuuid(puuid, [options], [region])`: Get match history (options: `{ start, count }`).
 - `getMatchById(matchId, [region])`: Get match details.
 
 ### DataDragon
+
 - `getChampions()`: Fetch all champion data.
 - `getItems()`: Fetch all item data.
 
 ## Region Mapping
 
 RiftJS uses a region map to route requests correctly:
+
 - **Platform Routing** (e.g., Summoner V4):
+
   - `EUW1` → `euw1.api.riotgames.com`
   - `NA1` → `na1.api.riotgames.com`
+
 - **Shard Routing** (e.g., Account V1, Match V5):
+
   - `EUW1` → `europe.api.riotgames.com`
   - `NA1` → `americas.api.riotgames.com`
 
@@ -129,17 +140,29 @@ Supported regions: `BR1`, `EUN1`, `EUW1`, `JP1`, `KR`, `LA1`, `LA2`, `NA1`, `OC1
 ## Development
 
 To contribute or run locally:
+
 1. Clone the repo:
-   ```
+
+   ```bash
    git clone https://github.com/timmsy1998/RiftJS.git
    cd RiftJS
    ```
+
 2. Install dependencies:
-   ```
+
+   ```bash
    npm install
    ```
+
 3. Create a `.env` file (see [Setup](#setup)).
-4. Test with `node test.js` (requires a valid API key).
+4. Run endpoint checks:
+
+   ```bash
+   npm test
+   ```
+
+   - Riot API calls run when `TEST_RIOT_ID` is set.
+   - Data Dragon calls always run.
 
 ## License
 

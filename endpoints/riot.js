@@ -1,10 +1,10 @@
 module.exports = (client, defaultRegion, regionMap) => ({
     /**
-     * Get account info by Riot ID (gameName and tagLine).
+     * Fetch account data by Riot ID.
      * @param {string} riotId - Riot ID (e.g., "Timmsy#BRUV" or "Timmsy", "BRUV").
      * @param {string} [tagLine] - Optional tagLine if not included in riotId.
-     * @param {string} [region] - Short region (defaults to constructor region).
-     * @returns {Promise<object>} Account data including puuid.
+     * @param {string} [region] - Region code used to resolve shard routing.
+     * @returns {Promise<object>} Account payload including `puuid`.
      */
     async getAccountByRiotId(riotId, tagLine = null, region = defaultRegion) {
         let gameName, tag;
@@ -27,10 +27,10 @@ module.exports = (client, defaultRegion, regionMap) => ({
     },
 
     /**
-     * Get summoner data by PUUID.
+     * Fetch Summoner-V4 data for a player's PUUID.
      * @param {string} puuid - Encrypted PUUID.
-     * @param {string} [region] - Short region (defaults to constructor region).
-     * @returns {Promise<object>} Summoner data.
+     * @param {string} [region] - Region code used to resolve platform routing.
+     * @returns {Promise<object>} Summoner payload.
      */
     async getSummonerByPuuid(puuid, region = defaultRegion) {
         const platform = regionMap[region].platform;
@@ -45,10 +45,10 @@ module.exports = (client, defaultRegion, regionMap) => ({
     },
 
     /**
-     * Get match history by PUUID.
-     * @param {string} puuid - Summoner's PUUID.
-     * @param {object} [options] - Query options (e.g., start, count).
-     * @param {string} [region] - Short region (defaults to constructor region).
+     * Fetch match IDs for a PUUID from Match-V5.
+     * @param {string} puuid - Player PUUID.
+     * @param {object} [options] - Query params such as `start` and `count`.
+     * @param {string} [region] - Region code used to resolve shard routing.
      * @returns {Promise<string[]>} Array of match IDs.
      */
     async getMatchlistByPuuid(puuid, options = {}, region = defaultRegion) {
@@ -65,10 +65,10 @@ module.exports = (client, defaultRegion, regionMap) => ({
     },
 
     /**
-     * Get match details by match ID.
+     * Fetch full match details by match ID.
      * @param {string} matchId - Match ID (e.g., "EUW1_1234567890").
-     * @param {string} [region] - Short region (defaults to constructor region).
-     * @returns {Promise<object>} Match data.
+     * @param {string} [region] - Region code used to resolve shard routing.
+     * @returns {Promise<object>} Match payload.
      */
     async getMatchById(matchId, region = defaultRegion) {
         const shard = regionMap[region].shard;

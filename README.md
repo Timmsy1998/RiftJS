@@ -7,14 +7,15 @@ A lightweight Node.js wrapper for the Riot Games API, providing easy access to L
 
 ## Overview
 
-RiftJS simplifies interaction with the Riot Games API and DataDragon static data. It supports fetching account details, summoner info, match history, and game data using a modular endpoint structure. Built with `axios` and `dotenv`, it’s designed for developers building League of Legends tools or applications.
+RiftJS simplifies interaction with the Riot Games API and DataDragon static data. It supports fetching account details, summoner info, match history, and game data using a modular endpoint structure. Built with `axios`, `dotenv`, and TypeScript, it’s designed for developers building League of Legends tools or applications.
 
 ## Features
 
 - **RiotAPI**: Fetch account data by Riot ID, summoner data by PUUID, match history, and match details.
 - **DataDragon**: Access static game data like champions and items.
 - **Region Support**: Handles platform (e.g., `EUW1`) and shard (e.g., `europe`) routing.
-- **Modular Design**: Endpoints are organized in an `/endpoints/` directory for easy extension.
+- **Modular Design**: Endpoints are organized in `src/endpoints/` for easy extension.
+- **TypeScript Types**: The package ships with declaration files for typed usage in TS projects.
 
 ## Installation
 
@@ -178,7 +179,13 @@ To contribute or run locally:
    ```
 
 3. Create a `.env` file (see [Setup](#setup)).
-4. Run endpoint checks:
+4. Build the package:
+
+   ```bash
+   npm run build
+   ```
+
+5. Run endpoint checks:
 
    ```bash
    npm test

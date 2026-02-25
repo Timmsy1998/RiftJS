@@ -1,14 +1,32 @@
 {
   "name": "@timmsy/riftjs",
   "version": "2.1.0",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
+    "build": "tsc -p tsconfig.json",
     "test": "npm run test:endpoints",
-    "test:endpoints": "node test-endpoints.js"
+    "test:endpoints": "npm run build && node dist/test-endpoints.js",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "axios": "^1.7.7",
     "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.10",
+    "typescript": "^5.8.2"
   },
   "keywords": [
     "riot-api",
@@ -20,6 +38,7 @@
     "game-data",
     "node-js",
     "javascript",
+    "typescript",
     "api-wrapper"
   ],
   "author": "James Timms",

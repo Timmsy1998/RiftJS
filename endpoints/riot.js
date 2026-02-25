@@ -1,3 +1,5 @@
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 module.exports = (client, defaultRegion, regionMap) => ({
     /**
      * Fetch account data by Riot ID.
@@ -80,5 +82,95 @@ module.exports = (client, defaultRegion, regionMap) => ({
         } catch (error) {
             throw this._handleError(error);
         }
+    },
+
+    /**
+     * Fetch match timeline data by match ID.
+     * @param {string} matchId - Match ID (e.g., "EUW1_1234567890").
+     * @param {string} [region] - Region code used to resolve shard routing.
+     * @returns {Promise<object>} Match timeline payload.
+     */
+    async getMatchTimelineById(matchId, region = defaultRegion) {
+        const shard = regionMap[region].shard;
+        try {
+            const response = await client.get(`/lol/match/v5/matches/${matchId}/timeline`, {
+                baseURL: `https://${shard}`,
+            });
+            return response.data;
+        } catch (error) {
+            throw this._handleError(error);
+        }
+    },
+
+    /**
+     * Fetch all match IDs for a PUUID using Riot's max page size (100).
+     * @param {string} puuid - Player PUUID.
+     * @param {object} [options] - Riot filters: startTime, endTime, queue, type, start.
+     * @param {string} [region] - Region code used to resolve shard routing.
+     * @param {object} [pacing] - Pacing controls.
+     * @param {number} [pacing.delayMs=1250] - Delay between page requests.
+     * @param {number|null} [pacing.maxMatches=null] - Optional cap on total IDs returned.
+     * @returns {Promise<string[]>} All matched IDs.
+     */
+    async getMatchlistByPuuidAll(puuid, options = {}, region = defaultRegion, pacing = {}) {
+        const baseStart = Number.isInteger(options.start) ? options.start : 0;
+        const pageDelayMs = Number.isInteger(pacing.delayMs) ? pacing.delayMs : 1250;
+        const maxMatches = Number.isInteger(pacing.maxMatches) && pacing.maxMatches >= 0 ? pacing.maxMatches : null;
+        const filters = {
+            startTime: options.startTime,
+            endTime: options.endTime,
+            queue: options.queue,
+            type: options.type,
+        };
+
+        let start = baseStart;
+        const allMatchIds = [];
+
+        while (true) {
+            const remaining = maxMatches === null ? 100 : Math.min(100, maxMatches - allMatchIds.length);
+            if (remaining <= 0) break;
+
+            const page = await this.getMatchlistByPuuid(puuid, { ...filters, start, count: remaining }, region);
+            allMatchIds.push(...page);
+
+            if (page.length < remaining) break;
+            start += page.length;
+            if (pageDelayMs > 0) await sleep(pageDelayMs);
+        }
+
+        return allMatchIds;
+    },
+
+    /**
+     * Fetch match IDs and full match payloads for each ID.
+     * @param {string} puuid - Player PUUID.
+     * @param {object} [options] - Riot filters: startTime, endTime, queue, type, start.
+     * @param {string} [region] - Region code used to resolve shard routing.
+     * @param {object} [pacing] - Pacing controls.
+     * @param {number} [pacing.pageDelayMs=1250] - Delay between matchlist page requests.
+     * @param {number} [pacing.detailDelayMs=1250] - Delay between match detail requests.
+     * @param {number|null} [pacing.maxMatches=null] - Optional cap on total matches fetched.
+     * @returns {Promise<{matchIds: string[], matches: object[]}>} IDs and full match payloads.
+     */
+    async getMatchesWithDetailsByPuuid(puuid, options = {}, region = defaultRegion, pacing = {}) {
+        const pageDelayMs = Number.isInteger(pacing.pageDelayMs) ? pacing.pageDelayMs : 1250;
+        const detailDelayMs = Number.isInteger(pacing.detailDelayMs) ? pacing.detailDelayMs : 1250;
+        const maxMatches = Number.isInteger(pacing.maxMatches) && pacing.maxMatches >= 0 ? pacing.maxMatches : null;
+        const matchIds = await this.getMatchlistByPuuidAll(
+            puuid,
+            options,
+            region,
+            { delayMs: pageDelayMs, maxMatches }
+        );
+        const matches = [];
+
+        for (let i = 0; i < matchIds.length; i += 1) {
+            matches.push(await this.getMatchById(matchIds[i], region));
+            if (detailDelayMs > 0 && i < matchIds.length - 1) {
+                await sleep(detailDelayMs);
+            }
+        }
+
+        return { matchIds, matches };
     },
 });

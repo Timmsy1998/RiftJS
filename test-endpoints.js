@@ -23,8 +23,27 @@ async function run() {
         if (matchIds.length > 0) {
             const match = await riot.getMatchById(matchIds[0]);
             console.log('[PASS] getMatchById:', match.metadata.matchId);
+
+            const timeline = await riot.getMatchTimelineById(matchIds[0]);
+            console.log('[PASS] getMatchTimelineById:', timeline.metadata.matchId);
+
+            const allMatchIds = await riot.getMatchlistByPuuidAll(
+                account.puuid,
+                { start: 0 },
+                undefined,
+                { maxMatches: 2, delayMs: 0 }
+            );
+            console.log('[PASS] getMatchlistByPuuidAll:', allMatchIds.length, 'match ids');
+
+            const withDetails = await riot.getMatchesWithDetailsByPuuid(
+                account.puuid,
+                { start: 0 },
+                undefined,
+                { maxMatches: 2, pageDelayMs: 0, detailDelayMs: 0 }
+            );
+            console.log('[PASS] getMatchesWithDetailsByPuuid:', withDetails.matches.length, 'matches');
         } else {
-            console.log('[SKIP] getMatchById: no matches returned');
+            console.log('[SKIP] Match-by-id/timeline/all/details checks: no matches returned');
         }
     } else if (process.env.RIOT_API_KEY) {
         console.log('[SKIP] Riot endpoints: set TEST_RIOT_ID (and TEST_TAG_LINE if needed)');

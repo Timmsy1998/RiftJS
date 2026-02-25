@@ -101,7 +101,22 @@ fetchStaticData();
 - `getAccountByRiotId(riotId, [tagLine], [region])`: Fetch account by Riot ID (e.g., `Timmsy#BRUV`).
 - `getSummonerByPuuid(puuid, [region])`: Get summoner data by PUUID.
 - `getMatchlistByPuuid(puuid, [options], [region])`: Get match history (options: `{ start, count }`).
-- `getMatchById(matchId, [region])`: Get match details.
+- `getMatchById(matchId, [region])`: Get full match payload (`metadata` + `info`) by match ID.
+- `getMatchTimelineById(matchId, [region])`: Get timeline payload by match ID.
+- `getMatchlistByPuuidAll(puuid, [options], [region], [pacing])`: Fetch all match IDs in pages of 100.
+- `getMatchesWithDetailsByPuuid(puuid, [options], [region], [pacing])`: Fetch all match IDs and their match payloads.
+
+`options` supports Riot Match-V5 query params:
+- `startTime` (epoch seconds)
+- `endTime` (epoch seconds)
+- `queue` (int)
+- `type` (string)
+- `start` (int, default `0`)
+- `count` (int, `0-100`, single-page method only)
+
+`pacing` helps respect rate limits on multi-request methods:
+- `getMatchlistByPuuidAll`: `{ delayMs, maxMatches }`
+- `getMatchesWithDetailsByPuuid`: `{ pageDelayMs, detailDelayMs, maxMatches }`
 
 ### DataDragon
 

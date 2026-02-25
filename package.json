@@ -1,6 +1,6 @@
 {
   "name": "@timmsy/riftjs",
-  "version": "3.0.1",
+  "version": "3.1.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -19,7 +19,7 @@
     "build": "tsc -p tsconfig.json",
     "test": "npm run test:endpoints",
     "test:endpoints": "npm run build && node dist/test-endpoints.js",
-    "prepublishOnly": "npm run build"
+    "prepack": "npm run build"
   },
   "dependencies": {
     "axios": "^1.7.7",

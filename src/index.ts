@@ -24,6 +24,7 @@ const regionMap: RegionMap = {
 };
 
 const parseRegion = (region: string): RegionCode => {
+    // Maintainer note (Timmsy): fail fast on bad region input so routing bugs are obvious immediately.
     const upper = region.toUpperCase() as RegionCode;
     if (!regionMap[upper]) throw new Error(`Invalid region: ${region}`);
     return upper;
@@ -52,6 +53,7 @@ export class RiotAPI implements RiotEndpointMethods {
             headers: { 'X-Riot-Token': this.apiKey },
         });
 
+        // Maintainer note (Timmsy): keep endpoint methods attached here so the class API stays flat for consumers.
         Object.assign(
             this,
             riotEndpoints({
@@ -105,6 +107,7 @@ export class DataDragon implements DataDragonEndpointMethods {
         if (this.baseURL) return this.baseURL;
         if (this.baseURLPromise) return this.baseURLPromise;
 
+        // Maintainer note (Timmsy): share one in-flight resolver to avoid duplicate version requests under concurrency.
         this.baseURLPromise = (async () => {
             if (!this.version) {
                 const response = await axios.get<string[]>('https://ddragon.leagueoflegends.com/api/versions.json');

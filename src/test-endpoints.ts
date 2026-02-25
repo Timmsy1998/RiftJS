@@ -57,6 +57,7 @@ async function run(): Promise<void> {
             );
             console.log('[PASS] getMatchesWithDetailsByPuuid:', withDetails.matches.length, 'matches');
         } else {
+            // Maintainer note (Timmsy): no-match accounts are valid, so keep this as a skip rather than a failure.
             console.log('[SKIP] Match-by-id/timeline/all/details checks: no matches returned');
         }
     } else if (process.env.RIOT_API_KEY) {

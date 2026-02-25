@@ -1,4 +1,30 @@
-node_modules
+# Dependencies
+node_modules/
+
+# Environment files (keep examples committed)
 .env
-test.js
+.env.local
+.env.*.local
+
+# Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# TypeScript incremental build metadata
+*.tsbuildinfo
+
+# Build output (generated locally, not tracked)
+dist/
+
+# Test and coverage output
+coverage/
+.nyc_output/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

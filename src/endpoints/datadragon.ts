@@ -5,6 +5,7 @@ type BaseURLResolver = string | (() => string | Promise<string>);
 
 export default function dataDragonEndpoints(baseURLOrResolver: BaseURLResolver): DataDragonEndpointMethods {
     const resolveBaseURL = async (): Promise<string> => {
+        // Maintainer note (Timmsy): allow either a fixed URL or lazy resolver so callers can choose version strategy.
         if (typeof baseURLOrResolver === 'function') {
             return baseURLOrResolver();
         }

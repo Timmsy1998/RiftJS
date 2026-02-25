@@ -1,205 +1,285 @@
 # RiftJS
 
-A lightweight Node.js wrapper for the Riot Games API, providing easy access to League of Legends game data.
+TypeScript-first Riot Games API wrapper for Node.js, with built-in Data Dragon support.
 
 [![npm version](https://badge.fury.io/js/@timmsy%2Friftjs.svg)](https://www.npmjs.com/package/@timmsy/riftjs)
 ![GitHub license](https://img.shields.io/github/license/timmsy1998/RiftJS)
 
-## Overview
+## What this package does
 
-RiftJS simplifies interaction with the Riot Games API and DataDragon static data. It supports fetching account details, summoner info, match history, and game data using a modular endpoint structure. Built with `axios`, `dotenv`, and TypeScript, it’s designed for developers building League of Legends tools or applications.
+RiftJS wraps common Riot API and Data Dragon use cases in a small API:
 
-## Features
+- Resolve account details from Riot ID
+- Get summoner details from PUUID
+- Get rank entries and queue-split rank summaries
+- Get match IDs, match details, and match timelines
+- Fetch all match IDs with paging and optional pacing
+- Fetch Data Dragon champion and item static data
 
-- **RiotAPI**: Fetch account data by Riot ID, summoner data by PUUID, match history, and match details.
-- **DataDragon**: Access static game data like champions and items.
-- **Region Support**: Handles platform (e.g., `EUW1`) and shard (e.g., `europe`) routing.
-- **Modular Design**: Endpoints are organized in `src/endpoints/` for easy extension.
-- **TypeScript Types**: The package ships with declaration files for typed usage in TS projects.
+The package is authored in TypeScript and published as compiled CommonJS with `.d.ts` types.
 
-## Installation
-
-Install RiftJS via npm:
+## Install
 
 ```bash
 npm install @timmsy/riftjs
 ```
 
-You’ll also need a Riot Games API key from [developer.riotgames.com](https://developer.riotgames.com/).
+You need a Riot developer key:
+- https://developer.riotgames.com/
 
-## Setup
+## Quick Start
 
-1. **Install Dependencies**:
-   Ensure you have Node.js installed, then run the install command above.
+### 1. Configure environment
 
-2. **Configure Environment**:
-   Create a `.env` file in your project root with your API key and region:
+Create a `.env` file in your app:
 
-   ```env
-   RIOT_API_KEY=RGAPI-your-api-key-here
-   REGION=EUW1
-   TEST_RIOT_ID=YourRiotName
-   TEST_TAG_LINE=EUW
-   ```
+```env
+RIOT_API_KEY=RGAPI-your-key-here
+REGION=EUW1
+```
 
-   - Replace `RGAPI-your-api-key-here` with your API key.
-   - Use a short region code (e.g., `EUW1`, `NA1`). See [Region Mapping](#region-mapping) for details.
-   - `TEST_RIOT_ID` and `TEST_TAG_LINE` are used by the endpoint test script.
+Notes:
+- `RIOT_API_KEY` is required for `RiotAPI`.
+- `REGION` is optional. Default is `EUW1`.
 
-## Usage
-
-Here’s a basic example to get started:
+### 2. Basic usage (JavaScript / CommonJS)
 
 ```js
 const { RiotAPI, DataDragon } = require('@timmsy/riftjs');
 
-// Initialize RiotAPI
-const riot = new RiotAPI();
+async function main() {
+  const riot = new RiotAPI();
+  const account = await riot.getAccountByRiotId('PlayerName#EUW');
+  const summoner = await riot.getSummonerByPuuid(account.puuid);
+  const matchIds = await riot.getMatchlistByPuuid(account.puuid, { start: 0, count: 5 });
 
-// Fetch account, summoner, and match data
-async function fetchPlayerData() {
-  try {
-    const account = await riot.getAccountByRiotId('Timmsy#BRUV');
-    console.log('Account:', account);
+  console.log('Summoner level:', summoner.summonerLevel);
+  console.log('Recent matches:', matchIds);
 
-    const summoner = await riot.getSummonerByPuuid(account.puuid);
-    console.log('Summoner:', summoner);
-
-    const matchlist = await riot.getMatchlistByPuuid(account.puuid, { start: 0, count: 5 });
-    console.log('Matchlist:', matchlist);
-
-    const match = await riot.getMatchById(matchlist[0]);
-    console.log('Match:', match);
-  } catch (error) {
-    console.error('Error:', error.message);
-  }
+  const dd = new DataDragon();
+  const champions = await dd.getChampions();
+  console.log('Champion count:', Object.keys(champions.data || {}).length);
 }
 
-// Initialize DataDragon
-const dd = new DataDragon();
+main().catch((err) => {
+  console.error(err.message);
+  process.exitCode = 1;
+});
+```
 
-async function fetchStaticData() {
-  try {
-    const champions = await dd.getChampions();
-    console.log('Champions:', champions.data);
+### 3. Basic usage (TypeScript)
 
-    const items = await dd.getItems();
-    console.log('Items:', items.data);
-  } catch (error) {
-    console.error('Error:', error.message);
-  }
+```ts
+import { RiotAPI, DataDragon } from '@timmsy/riftjs';
+
+async function main(): Promise<void> {
+  const riot = new RiotAPI();
+  const account = await riot.getAccountByRiotId('PlayerName#EUW');
+  const rank = await riot.getRankByPuuid(String(account.puuid || ''));
+
+  console.log('Solo queue:', rank.solo);
+  console.log('Flex queue:', rank.flex);
+
+  const dd = new DataDragon();
+  const items = await dd.getItems();
+  console.log('Item count:', Object.keys((items.data as Record<string, unknown>) || {}).length);
 }
 
-// Run the examples
-fetchPlayerData();
-fetchStaticData();
+main().catch((err: unknown) => {
+  const message = err instanceof Error ? err.message : 'Unknown error';
+  console.error(message);
+  process.exitCode = 1;
+});
 ```
 
 ## API Reference
 
-### RiotAPI
+## RiotAPI
 
-- `getAccountByRiotId(riotId, [tagLine], [region])`: Fetch account by Riot ID (e.g., `Timmsy#BRUV`).
-- `getSummonerByPuuid(puuid, [region])`: Get summoner data by PUUID.
-- `getRankEntriesByPuuid(puuid, [region])`: Get all League-V4 rank entries for a player PUUID.
-- `getRankByPuuid(puuid, [region])`: Get rank split by Solo and Flex queues from a PUUID.
-- `getMatchlistByPuuid(puuid, [options], [region])`: Get match history (options: `{ start, count }`).
-- `getMatchById(matchId, [region])`: Get full match payload (`metadata` + `info`) by match ID.
-- `getMatchTimelineById(matchId, [region])`: Get timeline payload by match ID.
-- `getMatchlistByPuuidAll(puuid, [options], [region], [pacing])`: Fetch all match IDs in pages of 100.
-- `getMatchesWithDetailsByPuuid(puuid, [options], [region], [pacing])`: Fetch all match IDs and their match payloads.
+`new RiotAPI()` reads:
+- `RIOT_API_KEY` from environment
+- `REGION` from environment (default `EUW1`)
 
-`options` supports Riot Match-V5 query params:
-- `startTime` (epoch seconds)
-- `endTime` (epoch seconds)
-- `queue` (int)
-- `type` (string)
-- `start` (int, default `0`)
-- `count` (int, `0-100`, single-page method only)
+### getAccountByRiotId(riotId, tagLine?, region?)
 
-`pacing` helps respect rate limits on multi-request methods:
-- `getMatchlistByPuuidAll`: `{ delayMs, maxMatches }`
-- `getMatchesWithDetailsByPuuid`: `{ pageDelayMs, detailDelayMs, maxMatches }`
+- Input:
+  - `riotId: string` (`"Name#Tag"` format, or name-only with `tagLine`)
+  - `tagLine?: string | null`
+  - `region?: RegionCode`
+- Output: account payload (includes `puuid`)
+- Example:
+```ts
+const account = await riot.getAccountByRiotId('Timmsy#BRUV');
+```
 
-Rank queue mapping used by helper methods:
-- Solo Queue: `RANKED_SOLO_5x5`
-- Flex Queue: `RANKED_FLEX_SR`
+### getSummonerByPuuid(puuid, region?)
 
-### DataDragon
+- Input:
+  - `puuid: string`
+  - `region?: RegionCode`
+- Output: Summoner V4 payload
 
-- `getChampions()`: Fetch all champion data.
-- `getItems()`: Fetch all item data.
-- `new DataDragon()` resolves the latest Data Dragon patch automatically.
-- `new DataDragon('x.y.z')` pins requests to an explicit patch version.
+### getRankEntriesByPuuid(puuid, region?)
 
-## Region Mapping
+- Input:
+  - `puuid: string`
+  - `region?: RegionCode`
+- Output: League V4 rank entries array
 
-RiftJS uses a region map to route requests correctly:
+### getRankByPuuid(puuid, region?)
 
-- **Platform Routing** (e.g., Summoner V4):
+- Input:
+  - `puuid: string`
+  - `region?: RegionCode`
+- Output:
+  - `solo`: solo queue entry with computed `winRate` (or `null`)
+  - `flex`: flex queue entry with computed `winRate` (or `null`)
+  - `entries`: original rank entries
 
-  - `EUW1` → `euw1.api.riotgames.com`
-  - `NA1` → `na1.api.riotgames.com`
+Queue constants used internally:
+- `RANKED_SOLO_5x5`
+- `RANKED_FLEX_SR`
 
-- **Shard Routing** (e.g., Account V1, Match V5):
+### getMatchlistByPuuid(puuid, options?, region?)
 
-  - `EUW1` → `europe.api.riotgames.com`
-  - `NA1` → `americas.api.riotgames.com`
+- Input:
+  - `puuid: string`
+  - `options?: MatchlistOptions`
+  - `region?: RegionCode`
+- Output: `string[]` of match IDs
 
-Supported regions: `BR1`, `EUN1`, `EUW1`, `JP1`, `KR`, `LA1`, `LA2`, `NA1`, `OC1`, `TR1`, `RU`, `PH2`, `SG2`, `TH2`, `TW2`, `VN2`.
+`MatchlistOptions`:
+- `startTime?: number` (epoch seconds)
+- `endTime?: number` (epoch seconds)
+- `queue?: number`
+- `type?: string`
+- `start?: number`
+- `count?: number` (Riot max is 100 for this endpoint)
 
-## Keywords
+### getMatchById(matchId, region?)
 
-- riot-api
-- league-of-legends
-- lol-api
-- datadragon
-- summoner
-- match-history
-- game-data
-- node-js
-- javascript
-- api-wrapper
+- Input:
+  - `matchId: string` (example `EUW1_1234567890`)
+  - `region?: RegionCode`
+- Output: Match V5 payload (`metadata` + `info`)
 
-## Development
+### getMatchTimelineById(matchId, region?)
 
-To contribute or run locally:
+- Input:
+  - `matchId: string`
+  - `region?: RegionCode`
+- Output: Match timeline payload
 
-1. Clone the repo:
+### getMatchlistByPuuidAll(puuid, options?, region?, pacing?)
 
-   ```bash
-   git clone https://github.com/timmsy1998/RiftJS.git
-   cd RiftJS
-   ```
+- Purpose: fetches all match IDs in pages of up to 100.
+- Input:
+  - `puuid: string`
+  - `options?: MatchlistOptions` (filters + optional start offset)
+  - `region?: RegionCode`
+  - `pacing?: { delayMs?: number; maxMatches?: number | null }`
+- Output: `string[]` of aggregated match IDs
 
-2. Install dependencies:
+### getMatchesWithDetailsByPuuid(puuid, options?, region?, pacing?)
 
-   ```bash
-   npm install
-   ```
+- Purpose: fetches match IDs, then fetches each match payload.
+- Input:
+  - `puuid: string`
+  - `options?: MatchlistOptions`
+  - `region?: RegionCode`
+  - `pacing?: { pageDelayMs?: number; detailDelayMs?: number; maxMatches?: number | null }`
+- Output:
+  - `matchIds: string[]`
+  - `matches: object[]`
 
-3. Create a `.env` file (see [Setup](#setup)).
-4. Build the package:
+## DataDragon
 
-   ```bash
-   npm run build
-   ```
+### new DataDragon(version?, locale?)
 
-5. Run endpoint checks:
+- `version?: string | null`
+  - Omit to auto-resolve the latest Data Dragon version
+  - Pass a version like `15.4.1` to pin
+- `locale?: string`
+  - Defaults to `en_US`
 
-   ```bash
-   npm test
-   ```
+### getChampions()
 
-   - Riot API calls run when `TEST_RIOT_ID` is set.
-   - Data Dragon calls always run.
+- Output: Data Dragon champion payload (`champion.json`)
+
+### getItems()
+
+- Output: Data Dragon item payload (`item.json`)
+
+## Supported regions
+
+Supported `REGION` / `region` values:
+
+`BR1`, `EUN1`, `EUW1`, `JP1`, `KR`, `LA1`, `LA2`, `NA1`, `OC1`, `TR1`, `RU`, `PH2`, `SG2`, `TH2`, `TW2`, `VN2`
+
+Routing behavior:
+- Platform APIs (example Summoner V4) use platform hosts like `euw1.api.riotgames.com`.
+- Regional APIs (example Match V5 / Account V1) use shard hosts like `europe.api.riotgames.com`.
+
+## Error behavior
+
+RiftJS normalizes errors to plain `Error` objects with readable messages:
+
+- HTTP response errors: `API error <status>: <message>`
+- No response from Riot: `No response received from the server`
+- Request setup/other errors: `Request error: <message>`
+- Data Dragon wrapper errors: `DataDragon error: <message>`
+
+## Local development
+
+### Run locally
+
+```bash
+git clone https://github.com/timmsy1998/RiftJS.git
+cd RiftJS
+npm install
+npm run build
+```
+
+### Run endpoint checks
+
+```bash
+npm test
+```
+
+Test script behavior:
+- Riot endpoint checks run only when `RIOT_API_KEY` and `TEST_RIOT_ID` are set.
+- Data Dragon checks always run.
+
+Optional `.env` values for tests:
+
+```env
+TEST_RIOT_ID=YourRiotName
+TEST_TAG_LINE=EUW
+```
+
+Maintainer notes:
+- See `MAINTAINER_NOTES.md` for project conventions and release checklist.
+
+## Package output
+
+Published entry points:
+- `main`: `dist/index.js`
+- `types`: `dist/index.d.ts`
+
+Build command:
+
+```bash
+npm run build
+```
+
+Compiled output is written to `dist/`.
 
 ## License
 
-MIT License © 2025 James Timms. See [LICENSE](LICENSE) for details.
+MIT License © 2025 James Timms. See [LICENSE](LICENSE).
 
 ## Links
 
-- **npm Registry**: [https://www.npmjs.com/package/@timmsy/riftjs](https://www.npmjs.com/package/@timmsy/riftjs)
-- **GitHub Repository**: [https://github.com/timmsy1998/RiftJS](https://github.com/timmsy1998/RiftJS)
-- **Riot Developer Portal**: [https://developer.riotgames.com/](https://developer.riotgames.com/)
+- npm: https://www.npmjs.com/package/@timmsy/riftjs
+- GitHub: https://github.com/timmsy1998/RiftJS
+- Riot Developer Portal: https://developer.riotgames.com/

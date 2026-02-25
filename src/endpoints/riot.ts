@@ -23,6 +23,7 @@ const withRankMetrics = (entry: RankEntry | null): RankEntryWithMetrics | null =
 };
 
 const coerceRegion = (region: string, regionMap: RiotEndpointsFactoryArgs['regionMap']): RegionCode => {
+    // Maintainer note (Timmsy): region overrides are accepted per-call, but must always match our known map.
     const upper = region.toUpperCase() as RegionCode;
     if (!regionMap[upper]) throw new Error(`Invalid region: ${region}`);
     return upper;
@@ -157,6 +158,7 @@ export default function riotEndpoints({
         region = defaultRegion,
         pacing: MatchlistAllPacing = {}
     ) => {
+        // Maintainer note (Timmsy): defaults are intentionally conservative to reduce accidental rate-limit spikes.
         const baseStart = Number.isInteger(options.start) ? (options.start as number) : 0;
         const pageDelayMs = Number.isInteger(pacing.delayMs) ? (pacing.delayMs as number) : 1250;
         const maxMatches =
@@ -192,6 +194,7 @@ export default function riotEndpoints({
         region = defaultRegion,
         pacing: MatchDetailsPacing = {}
     ) => {
+        // Maintainer note (Timmsy): details are fetched sequentially on purpose for predictable pacing.
         const pageDelayMs = Number.isInteger(pacing.pageDelayMs) ? (pacing.pageDelayMs as number) : 1250;
         const detailDelayMs = Number.isInteger(pacing.detailDelayMs) ? (pacing.detailDelayMs as number) : 1250;
         const maxMatches =

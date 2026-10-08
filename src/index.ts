@@ -55,7 +55,7 @@ export class RiotAPI implements RiotEndpointMethods {
     public getMatchesWithDetailsByPuuid!: RiotEndpointMethods['getMatchesWithDetailsByPuuid'];
 
     constructor(options: RiotAPIOptions = {}) {
-        loadEnv({ quiet: true });
+        if (options.loadEnv !== false) loadEnv({ quiet: true });
         const apiKey = options.apiKey ?? process.env.RIOT_API_KEY ?? '';
         if (!apiKey.trim() && !options.accessToken?.trim()) throw new Error('RIOT_API_KEY, apiKey or accessToken is required');
         this.region = parseRegion(options.region ?? process.env.REGION ?? 'EUW1');

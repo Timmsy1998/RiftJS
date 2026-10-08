@@ -8,6 +8,9 @@
 - Add configurable local rate windows, Riot application/method header tracking, persistent 429 cooldowns, and bounded retries for safe GETs. Mutations never retry automatically.
 - Correct SEA Account routing to Asia and validate tournament bodies and match pagination.
 - Add offline tests, public-reference drift checks, CI, dependency update configuration, and published endpoint documentation.
+- Add explicit ES module/CommonJS exports with shared class identity and declarations for NodeNext and bundler resolution.
+- Add `loadEnv: false`, reject browser imports, and document secure server integration for Node.js, Next.js, and Nuxt.
+- Add runnable framework examples and CI production-build/HTTP checks against an installed npm tarball.
 - Update Axios and dotenv dependencies.
 
-Breaking changes: Node.js 22+ is required; the public API key/raw client are no longer exposed; Riot errors omit raw upstream messages; all Riot requests now have default rate pacing, timeouts, and retries. `npm test` is offline; use `npm run test:endpoints` for live smoke checks. Existing convenience method signatures remain supported.
+Breaking changes: browser imports are rejected; Node.js 22+ is required; the public API key/raw client are no longer exposed; Riot errors omit raw upstream messages; all Riot requests now have default rate pacing, timeouts, and retries. `npm test` is offline; use `npm run test:endpoints` for live smoke checks. Existing convenience method signatures remain supported.

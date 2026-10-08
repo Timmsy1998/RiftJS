@@ -22,7 +22,7 @@ Reuse one client per key/process; the limiter is not distributed. Per-host seria
 ## Release checklist
 
 1. `npm ci` and `npm test` (includes strict consumer type checks).
-2. `npm run check:coverage` against Riot's current reference.
+2. `npm run test:integrations` on a current Node 22 or 24 patch to validate installed ESM/CommonJS exports and Next.js/Nuxt production routes; then `npm run check:coverage` against Riot's current reference.
 3. `npm audit` and review dependency update PRs. Investigate advisories; do not run force upgrades blindly.
 4. `npm pack --dry-run` and inspect package contents for declarations, catalog, docs, and absence of secrets. Smoke-test an installed tarball.
 5. If credentials are available, run `npm run test:endpoints` for read-only smoke validation. Record which restricted APIs remain unverified.

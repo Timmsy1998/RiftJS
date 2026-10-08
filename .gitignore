@@ -20,6 +20,9 @@ pnpm-debug.log*
 
 # Build output (generated locally, not tracked)
 dist/
+.next/
+.nuxt/
+.output/
 
 # Test and coverage output
 coverage/

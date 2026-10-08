@@ -1,8 +1,10 @@
 # RiftJS
 
-A server-side Node.js wrapper for every operation currently listed in Riot's League of Legends API reference: 53 operations across 14 API families, including Tournament V5, Tournament Stub V5, Riot Sign On (RSO), and the shared Account V1 API. Includes Data Dragon champion and item data, CommonJS output, and TypeScript declarations. Requires Node.js 22 or newer.
+A server-side Node.js wrapper for every operation currently listed in Riot's League of Legends API reference: 53 operations across 14 API families, including Tournament V5, Tournament Stub V5, Riot Sign On (RSO), and the shared Account V1 API. Includes Data Dragon champion and item data, ES module and CommonJS entry points, and TypeScript declarations. Requires Node.js 22 or newer.
 
 Coverage is checked against the [official reference](https://developer.riotgames.com/apis). See the [complete endpoint reference](docs/ENDPOINTS.md) for method signatures, routing, and authentication. Endpoint availability depends on your Riot application permissions; a wrapper cannot grant access to restricted APIs.
+
+For Node.js, Next.js, Nuxt, and browser apps with a Node backend, see the [integration guide](docs/INTEGRATIONS.md) and runnable framework examples.
 
 ## Install and start
 
@@ -30,7 +32,7 @@ async function main() {
 main().catch(error => { console.error(error.message); process.exitCode = 1; });
 ```
 
-TypeScript uses the same API: `import { RiotAPI, DataDragon, RiotAPIError } from '@timmsy/riftjs'`.
+ES module JavaScript and TypeScript use the same API: `import { RiotAPI, DataDragon, RiotAPIError } from '@timmsy/riftjs'`.
 
 ## Configuration and rate limits
 
@@ -48,7 +50,7 @@ const riot = new RiotAPI({
 });
 ```
 
-Those are the defaults. Local caps supplement Riot's application and method limit/count headers. `rateLimits: []` disables only local caps; Riot's response limits and 429 cooldowns still apply. Choose caps appropriate for your approved key. Requests serialize per host, reserve slots before sending, and honor `Retry-After` (seconds or HTTP date), including when retries are exhausted. Service or unknown throttles conservatively pause the host.
+Those are the transport defaults. Set `loadEnv: false` when your framework manages environment loading; explicit configuration and environment fallbacks still work. Local caps supplement Riot's application and method limit/count headers. `rateLimits: []` disables only local caps; Riot's response limits and 429 cooldowns still apply. Choose caps appropriate for your approved key. Requests serialize per host, reserve slots before sending, and honor `Retry-After` (seconds or HTTP date), including when retries are exhausted. Service or unknown throttles conservatively pause the host.
 
 Only GET requests retry, on 429 or 500/502/503/504, up to `maxRetries` (0–10). Other failures, including authentication and timeouts, fail immediately. Tournament POST/PUT requests never retry automatically, avoiding duplicate providers, tournaments, or codes. `timeoutMs` bounds each HTTP attempt; `maxRateLimitWaitMs` bounds the allowed rate/retry waiting period after acquiring the host queue, not total time spent queued. Use an `AbortSignal` for an overall deadline.
 
@@ -163,13 +165,14 @@ try {
 ```bash
 npm ci
 npm test                 # Offline transport, coverage, routing, and security tests
+npm run test:integrations # Packed-package Next.js/Nuxt production builds and HTTP routes
 npm run check:coverage   # Read-only check against Riot's current public reference
 npm run test:endpoints   # Optional live read-only smoke checks; needs network
 npm audit
 npm pack --dry-run
 ```
 
-Live Riot smoke checks require `RIOT_API_KEY` and `TEST_RIOT_ID`; `TEST_TAG_LINE` is optional. Data Dragon live checks run without a key. Tests never create tournaments. CI runs offline checks and packaging; a separate weekly workflow reports reference drift. Dependabot proposes dependency updates. These checks detect change; maintainers must review API changes and permissions before releasing. See [maintainer notes](MAINTAINER_NOTES.md).
+Live Riot smoke checks require `RIOT_API_KEY` and `TEST_RIOT_ID`; `TEST_TAG_LINE` is optional. Data Dragon live checks run without a key. Tests never create tournaments. CI runs offline checks, framework integration builds, and packaging; a separate weekly workflow reports reference drift. Dependabot proposes dependency updates. These checks detect change; maintainers must review API changes and permissions before releasing. See [maintainer notes](MAINTAINER_NOTES.md).
 
 v4 removes the public `apiKey` and raw client properties, uses sanitized `RiotAPIError`, adds default pacing and bounded retries to all Riot requests, requires Node.js 22+, and makes `npm test` offline. Existing convenience method signatures remain unchanged. Build output is generated for npm, not tracked in Git. See [CHANGELOG](CHANGELOG.md).
 

@@ -96,6 +96,8 @@ export type RegionalRoute = 'AMERICAS' | 'EUROPE' | 'ASIA' | 'SEA';
 export type RoutingRegion = RegionCode | RegionalRoute;
 export interface RateLimitWindow { limit: number; intervalMs: number }
 export interface RiotAPIOptions {
+    /** Set false when your framework manages environment loading. Defaults to true. */
+    loadEnv?: boolean;
     apiKey?: string;
     region?: RegionCode;
     /** OAuth bearer token obtained through your approved Riot Sign On integration. */

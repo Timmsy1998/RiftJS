@@ -50,7 +50,7 @@ export default function riotEndpoints({
             tag = tagLine || '';
         }
         if (!tag) throw new Error('TagLine is required for getAccountByRiotId');
-        const shard = regionMap[resolvedRegion].shard;
+        const shard = regionMap[resolvedRegion].shard.replace('sea.', 'asia.');
 
         try {
             const response = await client.get<Record<string, unknown>>(
@@ -110,6 +110,8 @@ export default function riotEndpoints({
         options: MatchlistOptions = {},
         region = defaultRegion
     ) => {
+        if (options.count !== undefined && (!Number.isInteger(options.count) || options.count < 0 || options.count > 100)) throw new Error('count must be an integer from 0 to 100');
+        if (options.start !== undefined && (!Number.isInteger(options.start) || options.start < 0)) throw new Error('start must be a nonnegative integer');
         const resolvedRegion = coerceRegion(region, regionMap);
         const shard = regionMap[resolvedRegion].shard;
 
@@ -129,7 +131,7 @@ export default function riotEndpoints({
         const shard = regionMap[resolvedRegion].shard;
 
         try {
-            const response = await client.get<Record<string, unknown>>(`/lol/match/v5/matches/${matchId}`, {
+            const response = await client.get<Record<string, unknown>>(`/lol/match/v5/matches/${encodeURIComponent(matchId)}`, {
                 baseURL: `https://${shard}`,
             });
             return response.data;
@@ -143,7 +145,7 @@ export default function riotEndpoints({
         const shard = regionMap[resolvedRegion].shard;
 
         try {
-            const response = await client.get<Record<string, unknown>>(`/lol/match/v5/matches/${matchId}/timeline`, {
+            const response = await client.get<Record<string, unknown>>(`/lol/match/v5/matches/${encodeURIComponent(matchId)}/timeline`, {
                 baseURL: `https://${shard}`,
             });
             return response.data;

@@ -1,0 +1,426 @@
+[
+  {
+    "id": "account-v1.getByPuuid",
+    "name": "getAccountByPuuid",
+    "method": "GET",
+    "path": "/riot/account/v1/accounts/by-puuid/{puuid}",
+    "route": "account",
+    "rso": false
+  },
+  {
+    "id": "account-v1.getByPuuidEsports",
+    "name": "getEsportsAccountByPuuid",
+    "method": "GET",
+    "path": "/riot/account/v1/accounts/by-puuid/{puuid}",
+    "route": "account",
+    "rso": false
+  },
+  {
+    "id": "account-v1.getByRiotId",
+    "name": "getAccountByRiotIdParts",
+    "method": "GET",
+    "path": "/riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}",
+    "route": "account",
+    "rso": false
+  },
+  {
+    "id": "account-v1.getByRiotIdEsports",
+    "name": "getEsportsAccountByRiotId",
+    "method": "GET",
+    "path": "/riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}",
+    "route": "account",
+    "rso": false
+  },
+  {
+    "id": "account-v1.getByAccessToken",
+    "name": "getAccountMe",
+    "method": "GET",
+    "path": "/riot/account/v1/accounts/me",
+    "route": "account",
+    "rso": true
+  },
+  {
+    "id": "account-v1.getByAccessTokenEsports",
+    "name": "getEsportsAccountMe",
+    "method": "GET",
+    "path": "/riot/account/v1/accounts/me",
+    "route": "account",
+    "rso": true
+  },
+  {
+    "id": "account-v1.getActiveShard",
+    "name": "getAccountActiveShard",
+    "method": "GET",
+    "path": "/riot/account/v1/active-shards/by-game/{game}/by-puuid/{puuid}",
+    "route": "account",
+    "rso": false
+  },
+  {
+    "id": "account-v1.getActiveRegion",
+    "name": "getAccountActiveRegion",
+    "method": "GET",
+    "path": "/riot/account/v1/region/by-game/{game}/by-puuid/{puuid}",
+    "route": "account",
+    "rso": false
+  },
+  {
+    "id": "champion-mastery-v4.getAllChampionMasteriesByPUUID",
+    "name": "getChampionMasteriesByPuuid",
+    "method": "GET",
+    "path": "/lol/champion-mastery/v4/champion-masteries/by-puuid/{encryptedPUUID}",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "champion-mastery-v4.getChampionMasteryByPUUID",
+    "name": "getChampionMasteryByPuuid",
+    "method": "GET",
+    "path": "/lol/champion-mastery/v4/champion-masteries/by-puuid/{encryptedPUUID}/by-champion/{championId}",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "champion-mastery-v4.getTopChampionMasteriesByPUUID",
+    "name": "getTopChampionMasteriesByPuuid",
+    "method": "GET",
+    "path": "/lol/champion-mastery/v4/champion-masteries/by-puuid/{encryptedPUUID}/top",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "champion-mastery-v4.getChampionMasteryScoreByPUUID",
+    "name": "getChampionMasteryScoreByPuuid",
+    "method": "GET",
+    "path": "/lol/champion-mastery/v4/scores/by-puuid/{encryptedPUUID}",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "champion-v3.getChampionInfo",
+    "name": "getChampionRotation",
+    "method": "GET",
+    "path": "/lol/platform/v3/champion-rotations",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "clash-v1.getPlayersByPUUID",
+    "name": "getClashPlayersByPuuid",
+    "method": "GET",
+    "path": "/lol/clash/v1/players/by-puuid/{puuid}",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "clash-v1.getTeamById",
+    "name": "getClashTeam",
+    "method": "GET",
+    "path": "/lol/clash/v1/teams/{teamId}",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "clash-v1.getTournaments",
+    "name": "getClashTournaments",
+    "method": "GET",
+    "path": "/lol/clash/v1/tournaments",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "clash-v1.getTournamentByTeam",
+    "name": "getClashTournamentByTeam",
+    "method": "GET",
+    "path": "/lol/clash/v1/tournaments/by-team/{teamId}",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "clash-v1.getTournamentById",
+    "name": "getClashTournament",
+    "method": "GET",
+    "path": "/lol/clash/v1/tournaments/{tournamentId}",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "league-exp-v4.getLeagueEntries",
+    "name": "getLeagueEntriesExpanded",
+    "method": "GET",
+    "path": "/lol/league-exp/v4/entries/{queue}/{tier}/{division}",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "league-v4.getChallengerLeague",
+    "name": "getChallengerLeague",
+    "method": "GET",
+    "path": "/lol/league/v4/challengerleagues/by-queue/{queue}",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "league-v4.getLeagueEntriesByPUUID",
+    "name": "getLeagueEntriesByPuuid",
+    "method": "GET",
+    "path": "/lol/league/v4/entries/by-puuid/{encryptedPUUID}",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "league-v4.getLeagueEntries",
+    "name": "getLeagueEntries",
+    "method": "GET",
+    "path": "/lol/league/v4/entries/{queue}/{tier}/{division}",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "league-v4.getGrandmasterLeague",
+    "name": "getGrandmasterLeague",
+    "method": "GET",
+    "path": "/lol/league/v4/grandmasterleagues/by-queue/{queue}",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "league-v4.getMasterLeague",
+    "name": "getMasterLeague",
+    "method": "GET",
+    "path": "/lol/league/v4/masterleagues/by-queue/{queue}",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "lol-challenges-v1.getAllChallengeConfigs",
+    "name": "getChallengeConfigs",
+    "method": "GET",
+    "path": "/lol/challenges/v1/challenges/config",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "lol-challenges-v1.getAllChallengePercentiles",
+    "name": "getChallengePercentiles",
+    "method": "GET",
+    "path": "/lol/challenges/v1/challenges/percentiles",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "lol-challenges-v1.getChallengeConfigs",
+    "name": "getChallengeConfig",
+    "method": "GET",
+    "path": "/lol/challenges/v1/challenges/{challengeId}/config",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "lol-challenges-v1.getChallengeLeaderboards",
+    "name": "getChallengeLeaderboard",
+    "method": "GET",
+    "path": "/lol/challenges/v1/challenges/{challengeId}/leaderboards/by-level/{level}",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "lol-challenges-v1.getChallengePercentiles",
+    "name": "getChallengePercentilesById",
+    "method": "GET",
+    "path": "/lol/challenges/v1/challenges/{challengeId}/percentiles",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "lol-challenges-v1.getPlayerData",
+    "name": "getChallengePlayerData",
+    "method": "GET",
+    "path": "/lol/challenges/v1/player-data/{puuid}",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "lol-rso-match-v1.getMatchIds",
+    "name": "getRsoMatchIds",
+    "method": "GET",
+    "path": "/lol/rso-match/v1/matches/ids",
+    "route": "regional",
+    "rso": true
+  },
+  {
+    "id": "lol-rso-match-v1.getMatch",
+    "name": "getRsoMatch",
+    "method": "GET",
+    "path": "/lol/rso-match/v1/matches/{matchId}",
+    "route": "regional",
+    "rso": true
+  },
+  {
+    "id": "lol-rso-match-v1.getTimeline",
+    "name": "getRsoMatchTimeline",
+    "method": "GET",
+    "path": "/lol/rso-match/v1/matches/{matchId}/timeline",
+    "route": "regional",
+    "rso": true
+  },
+  {
+    "id": "lol-status-v4.getPlatformData",
+    "name": "getPlatformStatus",
+    "method": "GET",
+    "path": "/lol/status/v4/platform-data",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "match-v5.getMatchIdsByPUUID",
+    "name": "getMatchIdsByPuuid",
+    "method": "GET",
+    "path": "/lol/match/v5/matches/by-puuid/{puuid}/ids",
+    "route": "regional",
+    "rso": false
+  },
+  {
+    "id": "match-v5.getReplay",
+    "name": "getMatchReplaysByPuuid",
+    "method": "GET",
+    "path": "/lol/match/v5/matches/by-puuid/{puuid}/replays",
+    "route": "regional",
+    "rso": false
+  },
+  {
+    "id": "match-v5.getMatch",
+    "name": "getMatch",
+    "method": "GET",
+    "path": "/lol/match/v5/matches/{matchId}",
+    "route": "regional",
+    "rso": false
+  },
+  {
+    "id": "match-v5.getTimeline",
+    "name": "getMatchTimeline",
+    "method": "GET",
+    "path": "/lol/match/v5/matches/{matchId}/timeline",
+    "route": "regional",
+    "rso": false
+  },
+  {
+    "id": "spectator-v5.getCurrentGameInfoByPuuid",
+    "name": "getCurrentGameByPuuid",
+    "method": "GET",
+    "path": "/lol/spectator/v5/active-games/by-summoner/{encryptedPUUID}",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "summoner-v4.getByPUUID",
+    "name": "getSummoner",
+    "method": "GET",
+    "path": "/lol/summoner/v4/summoners/by-puuid/{encryptedPUUID}",
+    "route": "platform",
+    "rso": false
+  },
+  {
+    "id": "summoner-v4.getByAccessToken",
+    "name": "getSummonerMe",
+    "method": "GET",
+    "path": "/lol/summoner/v4/summoners/me",
+    "route": "platform",
+    "rso": true
+  },
+  {
+    "id": "tournament-stub-v5.createTournamentCode",
+    "name": "createTournamentStubCodes",
+    "method": "POST",
+    "path": "/lol/tournament-stub/v5/codes",
+    "route": "tournament",
+    "rso": false
+  },
+  {
+    "id": "tournament-stub-v5.getTournamentCode",
+    "name": "getTournamentStubCode",
+    "method": "GET",
+    "path": "/lol/tournament-stub/v5/codes/{tournamentCode}",
+    "route": "tournament",
+    "rso": false
+  },
+  {
+    "id": "tournament-stub-v5.getLobbyEventsByCode",
+    "name": "getTournamentStubLobbyEvents",
+    "method": "GET",
+    "path": "/lol/tournament-stub/v5/lobby-events/by-code/{tournamentCode}",
+    "route": "tournament",
+    "rso": false
+  },
+  {
+    "id": "tournament-stub-v5.registerProviderData",
+    "name": "registerTournamentStubProvider",
+    "method": "POST",
+    "path": "/lol/tournament-stub/v5/providers",
+    "route": "tournament",
+    "rso": false
+  },
+  {
+    "id": "tournament-stub-v5.registerTournament",
+    "name": "registerTournamentStub",
+    "method": "POST",
+    "path": "/lol/tournament-stub/v5/tournaments",
+    "route": "tournament",
+    "rso": false
+  },
+  {
+    "id": "tournament-v5.createTournamentCode",
+    "name": "createTournamentCodes",
+    "method": "POST",
+    "path": "/lol/tournament/v5/codes",
+    "route": "tournament",
+    "rso": false
+  },
+  {
+    "id": "tournament-v5.getTournamentCode",
+    "name": "getTournamentCode",
+    "method": "GET",
+    "path": "/lol/tournament/v5/codes/{tournamentCode}",
+    "route": "tournament",
+    "rso": false
+  },
+  {
+    "id": "tournament-v5.updateCode",
+    "name": "updateTournamentCode",
+    "method": "PUT",
+    "path": "/lol/tournament/v5/codes/{tournamentCode}",
+    "route": "tournament",
+    "rso": false
+  },
+  {
+    "id": "tournament-v5.getGames",
+    "name": "getTournamentGames",
+    "method": "GET",
+    "path": "/lol/tournament/v5/games/by-code/{tournamentCode}",
+    "route": "tournament",
+    "rso": false
+  },
+  {
+    "id": "tournament-v5.getLobbyEventsByCode",
+    "name": "getTournamentLobbyEvents",
+    "method": "GET",
+    "path": "/lol/tournament/v5/lobby-events/by-code/{tournamentCode}",
+    "route": "tournament",
+    "rso": false
+  },
+  {
+    "id": "tournament-v5.registerProviderData",
+    "name": "registerTournamentProvider",
+    "method": "POST",
+    "path": "/lol/tournament/v5/providers",
+    "route": "tournament",
+    "rso": false
+  },
+  {
+    "id": "tournament-v5.registerTournament",
+    "name": "registerTournament",
+    "method": "POST",
+    "path": "/lol/tournament/v5/tournaments",
+    "route": "tournament",
+    "rso": false
+  }
+]

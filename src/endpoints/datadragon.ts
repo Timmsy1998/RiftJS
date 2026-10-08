@@ -16,7 +16,7 @@ export default function dataDragonEndpoints(baseURLOrResolver: BaseURLResolver):
         async getChampions() {
             try {
                 const baseURL = await resolveBaseURL();
-                const response = await axios.get<Record<string, unknown>>(`${baseURL}/champion.json`);
+                const response = await axios.get<Record<string, unknown>>(`${baseURL}/champion.json`, { timeout: 10000, maxRedirects: 0 });
                 return response.data;
             } catch (error) {
                 const message = error instanceof Error ? error.message : 'Unknown DataDragon error';
@@ -27,7 +27,7 @@ export default function dataDragonEndpoints(baseURLOrResolver: BaseURLResolver):
         async getItems() {
             try {
                 const baseURL = await resolveBaseURL();
-                const response = await axios.get<Record<string, unknown>>(`${baseURL}/item.json`);
+                const response = await axios.get<Record<string, unknown>>(`${baseURL}/item.json`, { timeout: 10000, maxRedirects: 0 });
                 return response.data;
             } catch (error) {
                 const message = error instanceof Error ? error.message : 'Unknown DataDragon error';

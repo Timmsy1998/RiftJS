@@ -1,7 +1,16 @@
-import 'dotenv/config';
 import axios from 'axios';
+import { config as loadEnv } from 'dotenv';
 import dataDragonEndpoints from './endpoints/datadragon';
 import riotEndpoints from './endpoints/riot';
+import { completeEndpoints } from './endpoints/complete';
+import type { CompleteEndpointMethods } from './endpoints/complete-types';
+import { RiotAPIError, RiotTransport } from './transport';
+import type { RiotAPIOptions } from './types';
+export * from './types';
+export type { CompleteEndpointMethods } from './endpoints/complete-types';
+export { RIOT_ENDPOINTS } from './endpoints/complete';
+export type { RiotEndpointId } from './endpoints/complete';
+export { RiotAPIError } from './transport';
 import type { DataDragonEndpointMethods, RegionCode, RegionMap, RiotEndpointMethods } from './types';
 
 const regionMap: RegionMap = {
@@ -31,9 +40,9 @@ const parseRegion = (region: string): RegionCode => {
 };
 
 export class RiotAPI implements RiotEndpointMethods {
-    public readonly apiKey: string;
     public readonly region: RegionCode;
-    private readonly client;
+    #client: RiotTransport;
+    public callEndpoint!: ReturnType<typeof completeEndpoints>['callEndpoint'];
 
     public getAccountByRiotId!: RiotEndpointMethods['getAccountByRiotId'];
     public getSummonerByPuuid!: RiotEndpointMethods['getSummonerByPuuid'];
@@ -45,19 +54,19 @@ export class RiotAPI implements RiotEndpointMethods {
     public getMatchlistByPuuidAll!: RiotEndpointMethods['getMatchlistByPuuidAll'];
     public getMatchesWithDetailsByPuuid!: RiotEndpointMethods['getMatchesWithDetailsByPuuid'];
 
-    constructor() {
-        this.apiKey = process.env.RIOT_API_KEY || '';
-        if (!this.apiKey) throw new Error('RIOT_API_KEY is required in .env');
-        this.region = parseRegion(process.env.REGION || 'EUW1');
-        this.client = axios.create({
-            headers: { 'X-Riot-Token': this.apiKey },
-        });
+    constructor(options: RiotAPIOptions = {}) {
+        loadEnv({ quiet: true });
+        const apiKey = options.apiKey ?? process.env.RIOT_API_KEY ?? '';
+        if (!apiKey.trim() && !options.accessToken?.trim()) throw new Error('RIOT_API_KEY, apiKey or accessToken is required');
+        this.region = parseRegion(options.region ?? process.env.REGION ?? 'EUW1');
+        this.#client = new RiotTransport(apiKey, options);
+        Object.assign(this, completeEndpoints(this.#client, this.region, regionMap));
 
         // Maintainer note (Timmsy): keep endpoint methods attached here so the class API stays flat for consumers.
         Object.assign(
             this,
             riotEndpoints({
-                client: this.client,
+                client: this.#client,
                 defaultRegion: this.region,
                 regionMap,
                 handleError: this._handleError,
@@ -66,24 +75,12 @@ export class RiotAPI implements RiotEndpointMethods {
     }
 
     private _handleError = (error: unknown): Error => {
-        if (axios.isAxiosError(error)) {
-            if (error.response) {
-                const status = error.response.status;
-                const data = error.response.data as { status?: { message?: string } } | undefined;
-                return new Error(`API error ${status}: ${data?.status?.message || 'Unknown error'}`);
-            }
-            if (error.request) {
-                return new Error('No response received from the server');
-            }
-            return new Error(`Request error: ${error.message}`);
-        }
-
-        if (error instanceof Error) {
-            return new Error(`Request error: ${error.message}`);
-        }
-        return new Error('Request error: Unknown error');
+        if (error instanceof RiotAPIError) return error;
+        return new RiotAPIError('Request failed');
     };
 }
+
+export interface RiotAPI extends CompleteEndpointMethods {}
 
 export class DataDragon implements DataDragonEndpointMethods {
     public version: string | null;
@@ -95,6 +92,8 @@ export class DataDragon implements DataDragonEndpointMethods {
     public getItems!: DataDragonEndpointMethods['getItems'];
 
     constructor(version: string | null = null, locale = 'en_US') {
+        if (version !== null && !/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Invalid Data Dragon version');
+        if (!/^[a-z]{2}_[A-Z]{2}$/.test(locale)) throw new Error('Invalid Data Dragon locale');
         this.version = version;
         this.locale = locale;
         this.baseURL = null;
@@ -104,15 +103,17 @@ export class DataDragon implements DataDragonEndpointMethods {
     }
 
     private async resolveBaseURL(): Promise<string> {
+        if (this.version !== null && !/^\d+\.\d+\.\d+$/.test(this.version)) throw new Error('Invalid Data Dragon version');
+        if (!/^[a-z]{2}_[A-Z]{2}$/.test(this.locale)) throw new Error('Invalid Data Dragon locale');
         if (this.baseURL) return this.baseURL;
         if (this.baseURLPromise) return this.baseURLPromise;
 
         // Maintainer note (Timmsy): share one in-flight resolver to avoid duplicate version requests under concurrency.
         this.baseURLPromise = (async () => {
             if (!this.version) {
-                const response = await axios.get<string[]>('https://ddragon.leagueoflegends.com/api/versions.json');
+                const response = await axios.get<string[]>('https://ddragon.leagueoflegends.com/api/versions.json', { timeout: 10000, maxRedirects: 0 });
                 const latestVersion = Array.isArray(response.data) ? response.data[0] : null;
-                if (!latestVersion) {
+                if (typeof latestVersion !== 'string' || !/^\d+\.\d+\.\d+$/.test(latestVersion)) {
                     throw new Error('Could not resolve latest Data Dragon version');
                 }
                 this.version = latestVersion;

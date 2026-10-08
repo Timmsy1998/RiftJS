@@ -1,4 +1,4 @@
-import type { AxiosInstance } from 'axios';
+import type { RiotTransport } from './transport';
 
 export type RegionCode =
     | 'BR1'
@@ -81,7 +81,7 @@ export interface RiotEndpointMethods {
 }
 
 export interface RiotEndpointsFactoryArgs {
-    client: AxiosInstance;
+    client: Pick<RiotTransport, 'get'>;
     defaultRegion: RegionCode;
     regionMap: RegionMap;
     handleError: (error: unknown) => Error;
@@ -90,4 +90,41 @@ export interface RiotEndpointsFactoryArgs {
 export interface DataDragonEndpointMethods {
     getChampions(): Promise<Record<string, unknown>>;
     getItems(): Promise<Record<string, unknown>>;
+}
+
+export type RegionalRoute = 'AMERICAS' | 'EUROPE' | 'ASIA' | 'SEA';
+export type RoutingRegion = RegionCode | RegionalRoute;
+export interface RateLimitWindow { limit: number; intervalMs: number }
+export interface RiotAPIOptions {
+    apiKey?: string;
+    region?: RegionCode;
+    /** OAuth bearer token obtained through your approved Riot Sign On integration. */
+    accessToken?: string;
+    timeoutMs?: number;
+    maxRetries?: number;
+    maxRateLimitWaitMs?: number;
+    /** Local caps supplement limits learned from Riot response headers. */
+    rateLimits?: RateLimitWindow[];
+}
+export interface EndpointOptions {
+    region?: RoutingRegion;
+    query?: Record<string, string | number | boolean | undefined>;
+    signal?: AbortSignal;
+}
+export type TournamentRegion = 'BR' | 'EUNE' | 'EUW' | 'JP' | 'LAN' | 'LAS' | 'NA' | 'OCE' | 'PBE' | 'RU' | 'TR' | 'KR' | 'PH' | 'SG' | 'TH' | 'TW' | 'VN';
+export interface TournamentProvider { region: TournamentRegion; url: string }
+export interface TournamentRegistration { providerId: number; name?: string }
+export interface TournamentCodeUpdate {
+    allowedParticipants?: string[];
+    mapType?: 'SUMMONERS_RIFT' | 'HOWLING_ABYSS';
+    pickType?: 'BLIND_PICK' | 'DRAFT_MODE' | 'ALL_RANDOM' | 'TOURNAMENT_DRAFT';
+    spectatorType?: 'NONE' | 'LOBBYONLY' | 'ALL';
+}
+export interface TournamentCodeParameters extends Omit<TournamentCodeUpdate, 'mapType'> {
+    mapType: 'SUMMONERS_RIFT' | 'HOWLING_ABYSS' | 'LEAGUE_CLASSIC';
+    pickType: NonNullable<TournamentCodeUpdate['pickType']>;
+    spectatorType: NonNullable<TournamentCodeUpdate['spectatorType']>;
+    teamSize: 1 | 2 | 3 | 4 | 5;
+    metadata?: string;
+    enoughPlayers?: boolean;
 }

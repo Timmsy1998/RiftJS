@@ -1,56 +1,107 @@
 name: Publish package
 
 on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
   push:
     tags:
       - "v*"
 
+permissions:
+  contents: read
+
+concurrency:
+  group: releases
+  cancel-in-progress: false
+
 jobs:
+  version:
+    if: >-
+      github.event_name == 'push' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.manual.outputs.tag || steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Use manually pushed tag
+        id: manual
+        if: github.event_name == 'push'
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          node --input-type=module -e "import { parseVersion } from './scripts/release-version.mjs'; parseVersion(process.env.RELEASE_TAG.slice(1));"
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+      - name: Check tested commit is still main
+        id: current
+        if: github.event_name == 'workflow_run'
+        run: |
+          git fetch origin main
+          if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Skipping superseded CI run; current main must pass CI first."
+          fi
+      - name: Calculate version from commits
+        id: version
+        if: steps.current.outputs.release == 'true'
+        run: node scripts/release-version.mjs
+      - name: Create version tag
+        if: steps.version.outputs.create == 'true'
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git tag "$RELEASE_TAG"
+          git push origin "refs/tags/$RELEASE_TAG"
+
   publish:
+    needs: version
+    if: needs.version.outputs.tag != ''
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
       packages: write
-
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - registry: https://registry.npmjs.org
+            token: NPM_TOKEN
+          - registry: https://npm.pkg.github.com
+            token: GITHUB_TOKEN
     steps:
-      - name: Checkout
+      - name: Checkout release tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          ref: ${{ needs.version.outputs.tag }}
           persist-credentials: false
-
-      - name: Setup Node
+      - name: Setup Node and registry authentication
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 24
-          registry-url: https://registry.npmjs.org
+          registry-url: ${{ matrix.registry }}
           package-manager-cache: false
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests
-        run: npm test
-
-      - name: Validate tag matches package version
-        run: |
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          PKG_VERSION="$(node -p "require('./package.json').version")"
-          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
-            echo "Tag version v$TAG_VERSION does not match package.json version $PKG_VERSION"
-            exit 1
-          fi
-
-      - name: Publish to npm
-        run: npm publish --access public
+      - run: npm ci
+      - run: npm test
+      - run: npm audit --audit-level=high
+      - name: Publish version to registry
+        run: node scripts/publish-package.mjs
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish to GitHub Packages
-        run: |
-          echo "@timmsy:registry=https://npm.pkg.github.com" >> "$NPM_CONFIG_USERCONFIG"
-          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> "$NPM_CONFIG_USERCONFIG"
-          npm pkg set name="@timmsy1998/riftjs"
-          npm publish --registry=https://npm.pkg.github.com
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.version.outputs.tag }}
+          RELEASE_REGISTRY: ${{ matrix.registry }}
+          NODE_AUTH_TOKEN: ${{ secrets[matrix.token] }}

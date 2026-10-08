@@ -26,6 +26,21 @@ Reuse one client per key/process; the limiter is not distributed. Per-host seria
 3. `npm audit` and review dependency update PRs. Investigate advisories; do not run force upgrades blindly.
 4. `npm pack --dry-run` and inspect package contents for declarations, catalog, docs, and absence of secrets. Smoke-test an installed tarball.
 5. If credentials are available, run `npm run test:endpoints` for read-only smoke validation. Record which restricted APIs remain unverified.
-6. Review breaking changes and semver, commit cohesive changes, and follow the repository's release process. Publishing is a separate authorized action.
+6. Review breaking changes and semver and commit cohesive changes. Merging release-worthy commits to `main` enables the automatic release process below.
+
+## Automatic releases
+
+After the complete CI workflow succeeds for a push to `main`, `Publish package` derives the next stable version from commits since the highest reachable stable `vX.Y.Z` tag:
+
+- `fix:`, `perf:`, and `chore(deps):` / `chore(deps-dev):` produce a patch release.
+- `feat:` produces a minor release.
+- A `!` after the type/scope or a `BREAKING CHANGE:` / `BREAKING-CHANGE:` footer produces a major release.
+- Docs, tests, CI, and other maintenance commits alone do not release. The largest bump wins when changes are combined.
+
+The source `package.json` version is the minimum release version, currently `4.0.0`, so the pending v4 work is released as `v4.0.0` rather than v3.2. Tags are authoritative after that: the publish job automatically sets the package and lockfile versions from the tag in its checkout. No manual version edits or tag pushes are needed for normal releases. The repository manifest may retain its minimum version between releases.
+
+The workflow tags the exact tested commit, skips CI runs superseded by a newer `main`, and publishes independently to npm (`@timmsy/riftjs`) and GitHub Packages (`@timmsy1998/riftjs`). It runs the publish jobs directly because tags created with `GITHUB_TOKEN` do not trigger another workflow. Release runs are serialized. Rerun a failed publish job to retry the same tag; a registry already containing that version from the same commit is skipped. Authentication or network failures and versions belonging to another commit fail explicitly.
+
+Keep the `NPM_TOKEN` repository secret configured with permission to publish `@timmsy/riftjs`. GitHub Packages uses the workflow's `GITHUB_TOKEN`. Repository Actions settings must allow the release job to write tags. Stable tags pushed manually still run the publish checks, and their versions are copied into the published manifests.
 
 GitHub Actions and Dependabot only maintain this project after these files are pushed and workflows are enabled. Schedule failures require a maintainer to investigate and make reviewed updates.

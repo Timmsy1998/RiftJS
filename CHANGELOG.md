@@ -12,5 +12,7 @@
 - Add `loadEnv: false`, reject browser imports, and document secure server integration for Node.js, Next.js, and Nuxt.
 - Add runnable framework examples and CI production-build/HTTP checks against an installed npm tarball.
 - Update Axios and dotenv dependencies.
+- Use modern Node module resolution so TypeScript 7 dependency updates pass build and consumer checks.
+- Automatically create semantic version tags and publish after successful main-branch CI, with independent registry retries.
 
 Breaking changes: browser imports are rejected; Node.js 22+ is required; the public API key/raw client are no longer exposed; Riot errors omit raw upstream messages; all Riot requests now have default rate pacing, timeouts, and retries. `npm test` is offline; use `npm run test:endpoints` for live smoke checks. Existing convenience method signatures remain supported.

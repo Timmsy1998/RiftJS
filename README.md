@@ -1,285 +1,176 @@
-![RiftJS logo](riftjs-logo.png)
+# RiftJS
 
-TypeScript-first Riot Games API wrapper for Node.js, with built-in Data Dragon support.
+A server-side Node.js wrapper for every operation currently listed in Riot's League of Legends API reference: 53 operations across 14 API families, including Tournament V5, Tournament Stub V5, Riot Sign On (RSO), and the shared Account V1 API. Includes Data Dragon champion and item data, CommonJS output, and TypeScript declarations. Requires Node.js 22 or newer.
 
-[![npm version](https://img.shields.io/npm/v/@timmsy/riftjs)](https://www.npmjs.com/package/@timmsy/riftjs)
-![GitHub license](https://img.shields.io/github/license/timmsy1998/RiftJS)
+Coverage is checked against the [official reference](https://developer.riotgames.com/apis). See the [complete endpoint reference](docs/ENDPOINTS.md) for method signatures, routing, and authentication. Endpoint availability depends on your Riot application permissions; a wrapper cannot grant access to restricted APIs.
 
-## What this package does
-
-RiftJS wraps common Riot API and Data Dragon use cases in a small API:
-
-- Resolve account details from Riot ID
-- Get summoner details from PUUID
-- Get rank entries and queue-split rank summaries
-- Get match IDs, match details, and match timelines
-- Fetch all match IDs with paging and optional pacing
-- Fetch Data Dragon champion and item static data
-
-The package is authored in TypeScript and published as compiled CommonJS with `.d.ts` types.
-
-## Install
+## Install and start
 
 ```bash
 npm install @timmsy/riftjs
 ```
 
-You need a Riot developer key:
-- https://developer.riotgames.com/
-
-## Quick Start
-
-### 1. Configure environment
-
-Create a `.env` file in your app:
-
-```env
-RIOT_API_KEY=RGAPI-your-key-here
-REGION=EUW1
-```
-
-Notes:
-- `RIOT_API_KEY` is required for `RiotAPI`.
-- `REGION` is optional. Default is `EUW1`.
-
-### 2. Basic usage (JavaScript / CommonJS)
+Keep credentials on your server. Set `RIOT_API_KEY` and optionally `REGION` in your environment or `.env` (default region: `EUW1`), or pass them to the constructor. Never bundle a Riot key or access token into a browser application or commit `.env` files.
 
 ```js
 const { RiotAPI, DataDragon } = require('@timmsy/riftjs');
 
 async function main() {
-  const riot = new RiotAPI();
+  const riot = new RiotAPI({ region: 'EUW1' });
   const account = await riot.getAccountByRiotId('PlayerName#EUW');
-  const summoner = await riot.getSummonerByPuuid(account.puuid);
-  const matchIds = await riot.getMatchlistByPuuid(account.puuid, { start: 0, count: 5 });
-
-  console.log('Summoner level:', summoner.summonerLevel);
-  console.log('Recent matches:', matchIds);
-
-  const dd = new DataDragon();
-  const champions = await dd.getChampions();
-  console.log('Champion count:', Object.keys(champions.data || {}).length);
+  const puuid = String(account.puuid);
+  const summoner = await riot.getSummonerByPuuid(puuid);
+  const ids = await riot.getMatchIdsByPuuid(puuid, { query: { count: 5 } });
+  const match = ids.length ? await riot.getMatch(ids[0]) : null;
+  console.log(summoner.summonerLevel, match);
+  const champions = await new DataDragon().getChampions();
+  console.log(Object.keys(champions.data || {}).length);
 }
 
-main().catch((err) => {
-  console.error(err.message);
-  process.exitCode = 1;
+main().catch(error => { console.error(error.message); process.exitCode = 1; });
+```
+
+TypeScript uses the same API: `import { RiotAPI, DataDragon, RiotAPIError } from '@timmsy/riftjs'`.
+
+## Configuration and rate limits
+
+```ts
+const riot = new RiotAPI({
+  apiKey: process.env.RIOT_API_KEY,
+  region: 'NA1',
+  timeoutMs: 10_000,
+  maxRetries: 2,
+  maxRateLimitWaitMs: 180_000,
+  rateLimits: [
+    { limit: 20, intervalMs: 1_000 },
+    { limit: 100, intervalMs: 120_000 },
+  ],
 });
 ```
 
-### 3. Basic usage (TypeScript)
+Those are the defaults. Local caps supplement Riot's application and method limit/count headers. `rateLimits: []` disables only local caps; Riot's response limits and 429 cooldowns still apply. Choose caps appropriate for your approved key. Requests serialize per host, reserve slots before sending, and honor `Retry-After` (seconds or HTTP date), including when retries are exhausted. Service or unknown throttles conservatively pause the host.
+
+Only GET requests retry, on 429 or 500/502/503/504, up to `maxRetries` (0–10). Other failures, including authentication and timeouts, fail immediately. Tournament POST/PUT requests never retry automatically, avoiding duplicate providers, tournaments, or codes. `timeoutMs` bounds each HTTP attempt; `maxRateLimitWaitMs` bounds the allowed rate/retry waiting period after acquiring the host queue, not total time spent queued. Use an `AbortSignal` for an overall deadline.
+
+Reuse one `RiotAPI` instance per credential and process. Limit state is in memory and is not shared between instances or processes. Multiple workers sharing a key need an external coordinator; Riot's headers and retries do not replace a distributed limiter. Local caps apply per host to both API-key and bearer requests on that instance.
 
 ```ts
-import { RiotAPI, DataDragon } from '@timmsy/riftjs';
-
-async function main(): Promise<void> {
-  const riot = new RiotAPI();
-  const account = await riot.getAccountByRiotId('PlayerName#EUW');
-  const rank = await riot.getRankByPuuid(String(account.puuid || ''));
-
-  console.log('Solo queue:', rank.solo);
-  console.log('Flex queue:', rank.flex);
-
-  const dd = new DataDragon();
-  const items = await dd.getItems();
-  console.log('Item count:', Object.keys((items.data as Record<string, unknown>) || {}).length);
-}
-
-main().catch((err: unknown) => {
-  const message = err instanceof Error ? err.message : 'Unknown error';
-  console.error(message);
-  process.exitCode = 1;
+await riot.getMatch('NA1_1234567890', {
+  region: 'AMERICAS', signal: AbortSignal.timeout(30_000),
 });
 ```
 
-## API Reference
+Credentials live in JavaScript private fields and are sent only in authentication headers to allowlisted HTTPS Riot hosts. Redirects are disabled, requests have finite timeouts and size caps, path parameters are encoded, and credentials in query parameters are rejected. Errors omit raw Axios config, request/response objects, and upstream messages that could expose credentials.
 
-## RiotAPI
+## Routes and endpoint options
 
-`new RiotAPI()` reads:
-- `RIOT_API_KEY` from environment
-- `REGION` from environment (default `EUW1`)
+New endpoint methods accept path arguments followed by `EndpointOptions`:
 
-### getAccountByRiotId(riotId, tagLine?, region?)
-
-- Input:
-  - `riotId: string` (`"Name#Tag"` format, or name-only with `tagLine`)
-  - `tagLine?: string | null`
-  - `region?: RegionCode`
-- Output: account payload (includes `puuid`)
-- Example:
 ```ts
-const account = await riot.getAccountByRiotId('Timmsy#BRUV');
+await riot.getLeagueEntries('RANKED_SOLO_5x5', 'DIAMOND', 'I', {
+  region: 'EUW1', query: { page: 2 },
+});
+await riot.getTopChampionMasteriesByPuuid(puuid, { query: { count: 3 } });
 ```
 
-### getSummonerByPuuid(puuid, region?)
+`EndpointOptions` contains `region`, `query`, and `signal`. Query values are strings, numbers, booleans, or undefined. Consult Riot's reference for accepted filters. Match-ID pagination validates `start >= 0` and `count` from 0 to 100.
 
-- Input:
-  - `puuid: string`
-  - `region?: RegionCode`
-- Output: Summoner V4 payload
+Platform routes: `BR1`, `EUN1`, `EUW1`, `JP1`, `KR`, `LA1`, `LA2`, `NA1`, `OC1`, `TR1`, `RU`, `PH2`, `SG2`, `TH2`, `TW2`, `VN2`. Regional operations also accept `AMERICAS`, `EUROPE`, `ASIA`, and `SEA`. Account V1 uses Americas, Europe, or Asia; SEA platform selections route account calls to Asia. Tournament APIs always use Americas, with the game server selected by the provider body's tournament region.
 
-### getRankEntriesByPuuid(puuid, region?)
+`RIOT_ENDPOINTS` is a frozen catalog of IDs, names, paths, methods, routes, and RSO flags. The restricted generic dispatcher supports every catalog operation without accepting arbitrary URLs:
 
-- Input:
-  - `puuid: string`
-  - `region?: RegionCode`
-- Output: League V4 rank entries array
+```ts
+interface MyMatch { metadata: { matchId: string } }
+const match = await riot.callEndpoint<MyMatch>('match-v5.getMatch', {
+  matchId: 'NA1_1234567890',
+}, { region: 'AMERICAS' });
+```
 
-### getRankByPuuid(puuid, region?)
+Named methods have typed arguments and tournament bodies. JSON object responses use `Record<string, unknown>` rather than exhaustive Riot DTO schemas; arrays and scalar return values are typed separately. Generic response types are caller assertions, not runtime payload validation.
 
-- Input:
-  - `puuid: string`
-  - `region?: RegionCode`
-- Output:
-  - `solo`: solo queue entry with computed `winRate` (or `null`)
-  - `flex`: flex queue entry with computed `winRate` (or `null`)
-  - `entries`: original rank entries
+## Tournaments
 
-Queue constants used internally:
-- `RANKED_SOLO_5x5`
-- `RANKED_FLEX_SR`
+Use stub endpoints to develop the integration. Real Tournament V5 requires Riot to approve your tournament application; stub codes cannot launch actual games. See [Riot's tournament documentation](https://developer.riotgames.com/docs/lol#tournament-api).
 
-### getMatchlistByPuuid(puuid, options?, region?)
+```ts
+const providerId = await riot.registerTournamentStubProvider({
+  region: 'EUW', url: 'https://your-app.example/riot/callback',
+});
+const tournamentId = await riot.registerTournamentStub({
+  providerId, name: 'Development Cup',
+});
+const codes = await riot.createTournamentStubCodes({
+  teamSize: 5, mapType: 'SUMMONERS_RIFT',
+  pickType: 'TOURNAMENT_DRAFT', spectatorType: 'ALL',
+  metadata: 'your-internal-match-id',
+}, tournamentId, 1);
+const lobby = await riot.getTournamentStubLobbyEvents(codes[0]);
+```
 
-- Input:
-  - `puuid: string`
-  - `options?: MatchlistOptions`
-  - `region?: RegionCode`
-- Output: `string[]` of match IDs
+For production use `registerTournamentProvider`, `registerTournament`, `createTournamentCodes`, `getTournamentCode`, `updateTournamentCode`, `getTournamentGames`, and `getTournamentLobbyEvents`. Code creation takes `(body, tournamentId, count?, options?)`; pass `undefined` for count if supplying only options. Count is 1–1000, team size 1–5. `allowedParticipants` uses encrypted PUUIDs. Provider callbacks must use HTTP(S) on the default port, without URL credentials. This package registers callback URLs; your application must implement and secure its callback receiver.
 
-`MatchlistOptions`:
-- `startTime?: number` (epoch seconds)
-- `endTime?: number` (epoch seconds)
-- `queue?: number`
-- `type?: string`
-- `start?: number`
-- `count?: number` (Riot max is 100 for this endpoint)
+## Riot Sign On
 
-### getMatchById(matchId, region?)
+RSO endpoints use an OAuth access token from your approved integration. Token acquisition, refresh, and user consent belong to your application. See [Riot's RSO documentation](https://developer.riotgames.com/docs/lol#rso-integration).
 
-- Input:
-  - `matchId: string` (example `EUW1_1234567890`)
-  - `region?: RegionCode`
-- Output: Match V5 payload (`metadata` + `info`)
+```ts
+const signedIn = new RiotAPI({ accessToken: userAccessToken, region: 'EUW1' });
+const account = await signedIn.getAccountMe();
+const summoner = await signedIn.getSummonerMe();
+const matches = await signedIn.getRsoMatchIds({ query: { count: 5 } });
+```
 
-### getMatchTimelineById(matchId, region?)
+RSO requests send only the bearer token. Ordinary endpoints require `apiKey`; a token-only client fails before sending ordinary calls. Create a new instance when replacing an access token.
 
-- Input:
-  - `matchId: string`
-  - `region?: RegionCode`
-- Output: Match timeline payload
+## Existing convenience methods
 
-### getMatchlistByPuuidAll(puuid, options?, region?, pacing?)
+The v3 convenience signatures remain available alongside the complete endpoint methods:
 
-- Purpose: fetches all match IDs in pages of up to 100.
-- Input:
-  - `puuid: string`
-  - `options?: MatchlistOptions` (filters + optional start offset)
-  - `region?: RegionCode`
-  - `pacing?: { delayMs?: number; maxMatches?: number | null }`
-- Output: `string[]` of aggregated match IDs
+| Method | Arguments | Result |
+| --- | --- | --- |
+| `getAccountByRiotId` | `riotId, tagLine?, region?` | Account; accepts `Name#Tag` or separate name/tag |
+| `getSummonerByPuuid` | `puuid, region?` | Summoner |
+| `getRankEntriesByPuuid` | `puuid, region?` | Rank entries |
+| `getRankByPuuid` | `puuid, region?` | `{ solo, flex, entries }`; win rate percentage on solo/flex |
+| `getMatchlistByPuuid` | `puuid, filters?, region?` | Match IDs |
+| `getMatchById` | `matchId, region?` | Match |
+| `getMatchTimelineById` | `matchId, region?` | Timeline |
+| `getMatchlistByPuuidAll` | `puuid, filters?, region?, pacing?` | Paged match IDs |
+| `getMatchesWithDetailsByPuuid` | `puuid, filters?, region?, pacing?` | `{ matchIds, matches }` |
 
-### getMatchesWithDetailsByPuuid(puuid, options?, region?, pacing?)
+Filters: `startTime`, `endTime` (epoch seconds), `queue`, `type`, `start`, `count`. Bulk ID pacing: `{ delayMs?, maxMatches? }`. Detail pacing: `{ pageDelayMs?, detailDelayMs?, maxMatches? }`. Delays default to 1250 ms, with the transport limiter also active. Use `maxMatches` to bound bulk work. Use new endpoint methods when you need `AbortSignal` or an explicit regional route.
 
-- Purpose: fetches match IDs, then fetches each match payload.
-- Input:
-  - `puuid: string`
-  - `options?: MatchlistOptions`
-  - `region?: RegionCode`
-  - `pacing?: { pageDelayMs?: number; detailDelayMs?: number; maxMatches?: number | null }`
-- Output:
-  - `matchIds: string[]`
-  - `matches: object[]`
+## Data Dragon and errors
 
-## DataDragon
+`new DataDragon(version?, locale?)` defaults to the latest version and `en_US`. Pin a version such as `16.1.1` when reproducibility matters. `getChampions()` and `getItems()` return their complete static JSON payloads. Version and locale inputs are validated; fetches use 10-second timeouts and disable redirects.
 
-### new DataDragon(version?, locale?)
+```ts
+try {
+  await riot.getMatch('NA1_1234567890');
+} catch (error) {
+  if (error instanceof RiotAPIError) {
+    console.error(error.message, error.status, error.code, error.retryAfterMs);
+  } else {
+    throw error;
+  }
+}
+```
 
-- `version?: string | null`
-  - Omit to auto-resolve the latest Data Dragon version
-  - Pass a version like `15.4.1` to pin
-- `locale?: string`
-  - Defaults to `en_US`
+`RiotAPIError` optionally provides `status`, `code`, `retryAfterMs`, and `rateLimitType`. Cancellation uses `ERR_CANCELED`; an excessive rate wait uses `RATE_LIMIT_WAIT`. Input validation can throw ordinary `Error`. Data Dragon failures retain a readable message.
 
-### getChampions()
-
-- Output: Data Dragon champion payload (`champion.json`)
-
-### getItems()
-
-- Output: Data Dragon item payload (`item.json`)
-
-## Supported regions
-
-Supported `REGION` / `region` values:
-
-`BR1`, `EUN1`, `EUW1`, `JP1`, `KR`, `LA1`, `LA2`, `NA1`, `OC1`, `TR1`, `RU`, `PH2`, `SG2`, `TH2`, `TW2`, `VN2`
-
-Routing behavior:
-- Platform APIs (example Summoner V4) use platform hosts like `euw1.api.riotgames.com`.
-- Regional APIs (example Match V5 / Account V1) use shard hosts like `europe.api.riotgames.com`.
-
-## Error behavior
-
-RiftJS normalizes errors to plain `Error` objects with readable messages:
-
-- HTTP response errors: `API error <status>: <message>`
-- No response from Riot: `No response received from the server`
-- Request setup/other errors: `Request error: <message>`
-- Data Dragon wrapper errors: `DataDragon error: <message>`
-
-## Local development
-
-### Run locally
+## Maintenance and v4 migration
 
 ```bash
-git clone https://github.com/timmsy1998/RiftJS.git
-cd RiftJS
-npm install
-npm run build
+npm ci
+npm test                 # Offline transport, coverage, routing, and security tests
+npm run check:coverage   # Read-only check against Riot's current public reference
+npm run test:endpoints   # Optional live read-only smoke checks; needs network
+npm audit
+npm pack --dry-run
 ```
 
-### Run endpoint checks
+Live Riot smoke checks require `RIOT_API_KEY` and `TEST_RIOT_ID`; `TEST_TAG_LINE` is optional. Data Dragon live checks run without a key. Tests never create tournaments. CI runs offline checks and packaging; a separate weekly workflow reports reference drift. Dependabot proposes dependency updates. These checks detect change; maintainers must review API changes and permissions before releasing. See [maintainer notes](MAINTAINER_NOTES.md).
 
-```bash
-npm test
-```
+v4 removes the public `apiKey` and raw client properties, uses sanitized `RiotAPIError`, adds default pacing and bounded retries to all Riot requests, requires Node.js 22+, and makes `npm test` offline. Existing convenience method signatures remain unchanged. Build output is generated for npm, not tracked in Git. See [CHANGELOG](CHANGELOG.md).
 
-Test script behavior:
-- Riot endpoint checks run only when `RIOT_API_KEY` and `TEST_RIOT_ID` are set.
-- Data Dragon checks always run.
-
-Optional `.env` values for tests:
-
-```env
-TEST_RIOT_ID=YourRiotName
-TEST_TAG_LINE=EUW
-```
-
-Maintainer notes:
-- See `MAINTAINER_NOTES.md` for project conventions and release checklist.
-
-## Package output
-
-Published entry points:
-- `main`: `dist/index.js`
-- `types`: `dist/index.d.ts`
-
-Build command:
-
-```bash
-npm run build
-```
-
-Compiled output is written to `dist/`.
-
-## License
-
-MIT License © 2025 James Timms. See [LICENSE](LICENSE).
-
-## Links
-
-- npm: https://www.npmjs.com/package/@timmsy/riftjs
-- GitHub: https://github.com/timmsy1998/RiftJS
-- Riot Developer Portal: https://developer.riotgames.com/
+MIT License. See [LICENSE](LICENSE). RiftJS is an independent wrapper, not an official Riot Games SDK.

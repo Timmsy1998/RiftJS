@@ -28,7 +28,10 @@ async function port() {
   return value;
 }
 try {
-  const packed = JSON.parse(execFileSync('npm', ['pack', '--json', '--pack-destination', temporary], { cwd: root, encoding: 'utf8' }));
+  // Lifecycle output can pollute npm pack --json (including the docs build log).
+  // Build explicitly, then pack without scripts to keep the metadata parseable.
+  await run('npm', ['run', 'build'], root);
+  const packed = JSON.parse(execFileSync('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', temporary], { cwd: root, encoding: 'utf8' }));
   const tarball = resolve(temporary, packed[0].filename);
   for (const framework of ['next', 'nuxt']) {
     console.log(`Testing installed tarball with ${framework}`);

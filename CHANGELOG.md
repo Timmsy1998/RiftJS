@@ -2,6 +2,7 @@
 
 ## 4.0.0 — unreleased
 
+- Bundle searchable offline HTML API documentation and a `riftjs-docs` command to browse it locally.
 - Add all 53 operations in the current Riot League of Legends/shared Account reference, including Tournament V5, Tournament Stub V5, RSO match access, replays, champion mastery, challenges, Clash, spectator, rotations, and status.
 - Add a frozen endpoint catalog, restricted generic dispatcher, typed arguments and tournament bodies, explicit routing options, and cancellation.
 - Protect credentials using JavaScript private fields, allowlisted HTTPS hosts, disabled redirects, finite timeouts, encoded paths, and sanitized errors.

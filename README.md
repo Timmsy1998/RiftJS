@@ -34,6 +34,18 @@ main().catch(error => { console.error(error.message); process.exitCode = 1; });
 
 ES module JavaScript and TypeScript use the same API: `import { RiotAPI, DataDragon, RiotAPIError } from '@timmsy/riftjs'`.
 
+## Browse the built-in API docs
+
+After installing the package, open its bundled documentation:
+
+```bash
+npx --no-install riftjs-docs
+```
+
+This starts a local server and opens your browser. The docs work offline, require no API key, and include searchable signatures for every endpoint, constructor, convenience method, and public type, alongside the endpoint and framework guides. Press Ctrl+C to stop the server.
+
+Use `npx --no-install riftjs-docs --no-open --port 8080` to choose a port and open the printed URL yourself. You can also open `node_modules/@timmsy/riftjs/dist/docs/index.html` directly without a server. In a source checkout, run `npm run docs`; `npm run docs:build` regenerates the HTML alone.
+
 ## Configuration and rate limits
 
 ```ts

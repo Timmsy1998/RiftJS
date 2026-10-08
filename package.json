@@ -23,15 +23,18 @@
     "LICENSE",
     "docs",
     "CHANGELOG.md",
-    "MAINTAINER_NOTES.md"
+    "MAINTAINER_NOTES.md",
+    "bin"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && node scripts/build-entrypoints.mjs",
+    "build": "tsc -p tsconfig.json && node scripts/build-entrypoints.mjs && node scripts/build-docs.mjs",
     "test": "npm run build && tsc -p tests/tsconfig.json && tsc -p tests/tsconfig.nodenext.json && tsc -p tests/tsconfig.bundler.json && node --test tests/*.test.cjs",
     "test:endpoints": "npm run build && node dist/test-endpoints.js",
     "prepack": "npm run build",
     "check:coverage": "node scripts/check-endpoint-coverage.mjs",
-    "test:integrations": "node scripts/test-integrations.mjs"
+    "test:integrations": "node scripts/test-integrations.mjs",
+    "docs:build": "node scripts/build-docs.mjs",
+    "docs": "npm run build && node bin/docs.mjs"
   },
   "dependencies": {
     "axios": "^1.20.0",
@@ -63,5 +66,8 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "bin": {
+    "riftjs-docs": "bin/docs.mjs"
   }
 }

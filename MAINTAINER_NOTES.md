@@ -6,6 +6,8 @@ The package wraps Riot's public League of Legends and shared Account APIs. Keep 
 
 `src/` is the source of truth. `dist/` is ignored build output; `prepack` generates it for npm. Commit source, tests, docs, and the lockfile using cohesive conventional tags such as `feat:`, `fix:`, `test:`, and `docs:`. Never commit credentials or `.env` files.
 
+The build also generates `dist/docs/index.html` from the TypeScript public exports, endpoint catalog, README, and Markdown guides. It is a standalone offline viewer shipped with the package. `npm run docs` builds and opens it; `npm run docs:build` only regenerates the HTML. The `riftjs-docs` executable serves only that HTML on the loopback interface and supports `--no-open` and `--port`. No compiler or documentation dependencies are needed to view an installed package's docs. Keep method descriptions in source JSDoc and usage explanations in the Markdown guides.
+
 Run `npm run check:coverage` to compare the local catalog with Riot's official reference. The weekly workflow detects missing, changed, and removed operations and fails if Riot's reference format changes; it does not automatically modify code. For each change:
 
 1. Review the official operation's path, HTTP method, routing, query/body schema, authentication, and return value.

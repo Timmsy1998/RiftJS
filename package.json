@@ -62,7 +62,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/timmsy1998/RiftJS.git"
+    "url": "git+https://github.com/Timmsy1998/RiftJS.git"
   },
   "engines": {
     "node": ">=22"

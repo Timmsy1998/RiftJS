@@ -60,23 +60,43 @@ test('publishing retries skip the same commit and reject conflicts or registry f
     writeFileSync(join(cwd, 'npm'), `#!/usr/bin/env node
 const fs = require('node:fs');
 const args = process.argv.slice(2);
+if (['view', 'publish'].includes(args[0])) {
+  const registry = process.env.RELEASE_REGISTRY;
+  const scope = registry === 'https://registry.npmjs.org' ? '@timmsy' : '@timmsy1998';
+  if (!args.includes('--registry=' + registry) || !args.includes('--' + scope + ':registry=' + registry)) process.exit(99);
+}
 if (args[0] === 'view') {
   if (process.env.SCENARIO === 'same') console.log(JSON.stringify({gitHead: 'tested-sha'}));
   else if (process.env.SCENARIO === 'conflict') console.log(JSON.stringify({gitHead: 'other-sha'}));
   else { console.log(JSON.stringify({error: {code: process.env.SCENARIO}})); process.exit(1); }
-} else if (args[0] === 'publish') fs.writeFileSync('published', JSON.stringify(args));
+} else if (args[0] === 'publish') {
+  if (process.env.PUBLISH_FAIL === 'true') { console.error('npm error E404 PUT: permission denied'); process.exit(1); }
+  fs.writeFileSync('published', JSON.stringify(args));
+}
 else if (args[0] === 'pkg') { const p = JSON.parse(fs.readFileSync('package.json')); p.name = args[2].slice(5); fs.writeFileSync('package.json', JSON.stringify(p)); }
 else if (args[0] === 'version') { const p = JSON.parse(fs.readFileSync('package.json')); p.version = args[1]; fs.writeFileSync('package.json', JSON.stringify(p)); }
 `, { mode: 0o755 });
-    const run = (scenario, registry = 'https://registry.npmjs.org') => spawnSync(process.execPath, [script], {
+    const run = (scenario, registry = 'https://registry.npmjs.org', env = {}) => spawnSync(process.execPath, [script], {
       cwd, encoding: 'utf8', env: { ...process.env, PATH: `${cwd}:${process.env.PATH}`, SCENARIO: scenario,
-        RELEASE_TAG: 'v4.0.1', RELEASE_REGISTRY: registry },
+        RELEASE_TAG: 'v4.0.1', RELEASE_REGISTRY: registry, ...env },
     });
     assert.equal(run('same').status, 0);
     assert.equal(require('node:fs').existsSync(join(cwd, 'published')), false);
     assert.match(run('conflict').stderr, /different or unknown commit/);
     for (const code of ['E401', 'E403', 'ENOTFOUND']) assert.notEqual(run(code).status, 0);
     assert.equal(require('node:fs').existsSync(join(cwd, 'published')), false);
+    const denied = run('E404', 'https://registry.npmjs.org', { PUBLISH_FAIL: 'true' });
+    assert.equal(denied.status, 1);
+    assert.match(denied.stderr, /npm error E404 PUT/);
+    assert.match(denied.stderr, /trusted publisher.*Timmsy1998\/RiftJS/);
+    assert.match(denied.stderr, /NPM_TOKEN/);
+    assert.equal(require('node:fs').existsSync(join(cwd, 'published')), false);
+    // Tokenless publishing must reach npm publish so its OIDC negotiation can run.
+    assert.equal(run('E404', 'https://registry.npmjs.org', { NODE_AUTH_TOKEN: '' }).status, 0);
+    rmSync(join(cwd, 'published'));
+    const githubDenied = run('E404', 'https://npm.pkg.github.com', { PUBLISH_FAIL: 'true' });
+    assert.equal(githubDenied.status, 1);
+    assert.match(githubDenied.stderr, /GITHUB_TOKEN packages: write/);
     assert.equal(run('E404', 'https://npm.pkg.github.com').status, 0);
     const manifest = JSON.parse(require('node:fs').readFileSync(join(cwd, 'package.json')));
     assert.equal(manifest.name, '@timmsy1998/riftjs');

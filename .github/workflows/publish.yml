@@ -76,6 +76,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write # npm trusted publishing (OIDC)
     strategy:
       fail-fast: false
       matrix:
@@ -96,6 +97,9 @@ jobs:
           node-version: 24
           registry-url: ${{ matrix.registry }}
           package-manager-cache: false
+      - name: Install npm with trusted publishing support
+        if: matrix.registry == 'https://registry.npmjs.org'
+        run: npm install --global npm@11 --registry=https://registry.npmjs.org
       - run: npm ci
       - run: npm test
       - run: npm audit --audit-level=high

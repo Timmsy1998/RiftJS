@@ -15,5 +15,6 @@
 - Update Axios and dotenv dependencies.
 - Use modern Node module resolution so TypeScript 7 dependency updates pass build and consumer checks.
 - Automatically create semantic version tags and publish after successful main-branch CI, with independent registry retries.
+- Enable npm trusted publishing with OIDC, force the correct scoped registry, and explain registry authorization failures.
 
 Breaking changes: browser imports are rejected; Node.js 22+ is required; the public API key/raw client are no longer exposed; Riot errors omit raw upstream messages; all Riot requests now have default rate pacing, timeouts, and retries. `npm test` is offline; use `npm run test:endpoints` for live smoke checks. Existing convenience method signatures remain supported.
